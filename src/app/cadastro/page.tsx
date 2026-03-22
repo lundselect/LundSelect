@@ -18,10 +18,10 @@ export default function CadastroPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const ok = await register(name, email, password)
+    const err = await register(name, email, password)
     setLoading(false)
-    if (ok) router.push('/conta')
-    else setError('Este e-mail já está cadastrado.')
+    if (!err) router.push('/conta')
+    else setError(err)
   }
 
   return (

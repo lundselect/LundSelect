@@ -17,10 +17,10 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const ok = await login(email, password)
+    const err = await login(email, password)
     setLoading(false)
-    if (ok) router.push('/conta')
-    else setError('E-mail ou senha inválidos. Tente novamente.')
+    if (!err) router.push('/conta')
+    else setError(err)
   }
 
   return (

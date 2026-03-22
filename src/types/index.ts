@@ -4,6 +4,7 @@ export interface Brand {
   state: string
   category: string
   slug: string
+  description?: string
 }
 
 export interface Product {
@@ -16,4 +17,26 @@ export interface Product {
   sizes: string[]
   slug: string
   image?: string
+  isNew?: boolean
+  inStock?: boolean
+  description?: string
+  onSale?: boolean
+}
+
+export interface User {
+  id: string
+  name: string
+  email: string
+}
+
+export interface CartItem {
+  product: Product
+  size: string
+  quantity: number
+}
+
+export interface FavoriteList {
+  id: string
+  name: string
+  productIds: string[]
 }

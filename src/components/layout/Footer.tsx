@@ -28,10 +28,15 @@ export default function Footer() {
           <div>
             <h3 className="text-offwhite text-xs tracking-widest uppercase mb-4">Ajuda</h3>
             <ul className="space-y-3">
-              {['Sobre nós', 'Para marcas', 'Frete & Trocas', 'Contato'].map((item) => (
-                <li key={item}>
-                  <Link href="#" className="text-offwhite/50 hover:text-gold text-sm transition-colors">
-                    {item}
+              {[
+                { label: 'Sobre nós', href: '/sobre' },
+                { label: 'Para marcas', href: '/marcas-parceiras' },
+                { label: 'Frete & Trocas', href: '/frete-trocas' },
+                { label: 'Contato', href: '/contato' },
+              ].map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} className="text-offwhite/50 hover:text-gold text-sm transition-colors">
+                    {item.label}
                   </Link>
                 </li>
               ))}

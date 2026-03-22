@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
 import { products } from '@/lib/data'
+import AddressSection from './AddressSection'
 
 const quickLinks = [
   { label: 'Meus pedidos', icon: '📦', href: '#pedidos' },
@@ -144,17 +145,7 @@ export default function ContaPage() {
             </div>
           )}
 
-          {activeSection === 'enderecos' && (
-            <div>
-              <h2 className="text-offwhite text-lg font-light mb-6">Endereços</h2>
-              <div className="border border-dashed border-gold/20 p-8 text-center">
-                <p className="text-offwhite/30 text-sm mb-4">Nenhum endereço cadastrado</p>
-                <button className="text-gold text-xs tracking-widest uppercase border border-gold/30 px-6 py-2 hover:border-gold transition-colors">
-                  Adicionar endereço
-                </button>
-              </div>
-            </div>
-          )}
+          {activeSection === 'enderecos' && <AddressSection />}
 
           {activeSection === 'pagamento' && (
             <div>

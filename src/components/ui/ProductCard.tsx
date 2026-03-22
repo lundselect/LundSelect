@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { Product } from '@/types'
 import { useFavorites } from '@/contexts/FavoritesContext'
 
@@ -15,13 +16,23 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <Link href={`/produtos/${product.slug}`} className="group block">
       <div className="aspect-[3/4] bg-offwhite/5 border border-gold/10 overflow-hidden mb-3 relative">
-        {/* Placeholder image area */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-gold/20 text-xs tracking-widest uppercase">{product.brand}</span>
-        </div>
+        {/* Image */}
+        {product.image ? (
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-gold/20 text-xs tracking-widest uppercase">{product.brand}</span>
+          </div>
+        )}
 
         {/* Hover overlay */}
-        <div className="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         {/* Badges */}
         {product.isNew && product.inStock !== false && (

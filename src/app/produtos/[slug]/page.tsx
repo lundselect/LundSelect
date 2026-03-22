@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Metadata } from 'next'
 import { products, getProductBySlug } from '@/lib/data'
 import ProductActions from './ProductActions'
@@ -49,15 +50,28 @@ export default function ProductDetailPage({ params }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
         {/* Image */}
-        <div className="relative aspect-[3/4] bg-offwhite/5 border border-gold/10 flex items-center justify-center">
-          <span className="text-gold/20 text-sm tracking-widest uppercase">{product.brand}</span>
+        <div className="relative aspect-[3/4] bg-offwhite/5 border border-gold/10 overflow-hidden">
+          {product.image ? (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-gold/20 text-sm tracking-widest uppercase">{product.brand}</span>
+            </div>
+          )}
           {product.isNew && product.inStock !== false && (
-            <span className="absolute top-4 left-4 bg-gold text-primary text-[9px] tracking-widest uppercase px-2 py-1">
+            <span className="absolute top-4 left-4 bg-gold text-primary text-[9px] tracking-widest uppercase px-2 py-1 z-10">
               Novidade
             </span>
           )}
           {product.inStock === false && (
-            <div className="absolute inset-0 bg-primary/60 flex items-center justify-center">
+            <div className="absolute inset-0 bg-primary/60 flex items-center justify-center z-10">
               <span className="text-offwhite/50 text-xs tracking-widest uppercase border border-offwhite/20 px-4 py-2">Esgotado</span>
             </div>
           )}

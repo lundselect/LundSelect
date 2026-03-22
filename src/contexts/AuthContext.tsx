@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { User } from '@/types'
+import { supabase } from '@/lib/supabase'
 
 interface AuthContextType {
   user: User | null
@@ -17,41 +18,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const stored = localStorage.getItem('lund_user')
-    if (stored) setUser(JSON.parse(stored))
-    setIsLoading(false)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || '',
+          email: session.user.email || '',
+        })
+      }
+      setIsLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || '',
+          email: session.user.email || '',
+        })
+      } else {
+        setUser(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const login = async (email: string, _password: string): Promise<boolean> => {
-    const stored = localStorage.getItem('lund_users')
-    const users: (User & { password: string })[] = stored ? JSON.parse(stored) : []
-    const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
-    if (!found) return false
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _p, ...userData } = found
-    setUser(userData)
-    localStorage.setItem('lund_user', JSON.stringify(userData))
-    return true
+  const login = async (email: string, password: string): Promise<boolean> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    return !error
   }
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    const stored = localStorage.getItem('lund_users')
-    const users: (User & { password: string })[] = stored ? JSON.parse(stored) : []
-    if (users.find((u) => u.email.toLowerCase() === email.toLowerCase())) return false
-    const newUser = { id: Date.now().toString(), name, email, password }
-    users.push(newUser)
-    localStorage.setItem('lund_users', JSON.stringify(users))
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _pw, ...userData } = newUser
-    setUser(userData)
-    localStorage.setItem('lund_user', JSON.stringify(userData))
-    return true
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
+    })
+    return !error
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('lund_user')
+  const logout = async () => {
+    await supabase.auth.signOut()
   }
 
   return (

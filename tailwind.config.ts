@@ -9,9 +9,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#1a1a1a',
-        gold: '#b5965a',
-        offwhite: '#faf8f5',
+        primary: '#faf8f5',
+        gold: '#8a6a2e',
+        offwhite: '#1a1a1a',
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

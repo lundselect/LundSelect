@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Metadata } from 'next'
-import { products, getProductBySlug } from '@/lib/data'
+import { getProductBySlug, getProducts } from '@/lib/queries'
+import { products } from '@/lib/data'
 import ProductActions from './ProductActions'
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const product = getProductBySlug(params.slug)
+  const product = await getProductBySlug(params.slug)
   if (!product) return { title: 'Produto não encontrado — Lund Select' }
   return {
     title: `${product.name} — ${product.brand} | Lund Select`,
@@ -27,11 +28,14 @@ export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }))
 }
 
-export default function ProductDetailPage({ params }: Props) {
-  const product = getProductBySlug(params.slug)
+export default async function ProductDetailPage({ params }: Props) {
+  const [product, allProducts] = await Promise.all([
+    getProductBySlug(params.slug),
+    getProducts(),
+  ])
   if (!product) notFound()
 
-  const related = products
+  const related = allProducts
     .filter((p) => p.slug !== product.slug && p.category === product.category)
     .slice(0, 4)
 

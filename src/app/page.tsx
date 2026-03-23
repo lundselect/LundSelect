@@ -1,9 +1,10 @@
 import Link from 'next/link'
-import { brands, products } from '@/lib/data'
+import { getBrands, getProducts } from '@/lib/queries'
 import ProductCard from '@/components/ui/ProductCard'
 import BrandCard from '@/components/ui/BrandCard'
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [brands, products] = await Promise.all([getBrands(), getProducts()])
   return (
     <>
       {/* Hero */}

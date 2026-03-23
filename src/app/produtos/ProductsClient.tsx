@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { products, brands } from '@/lib/data'
+import { Brand, Product } from '@/types'
 import ProductCard from '@/components/ui/ProductCard'
 
 const priceRanges = [
@@ -14,9 +14,11 @@ const priceRanges = [
 interface Props {
   initialCategory?: string
   initialBrand?: string
+  brands: Brand[]
+  products: Product[]
 }
 
-export default function ProductsClient({ initialCategory, initialBrand }: Props) {
+export default function ProductsClient({ initialCategory, initialBrand, brands, products }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     initialCategory ? decodeURIComponent(initialCategory) : null
   )

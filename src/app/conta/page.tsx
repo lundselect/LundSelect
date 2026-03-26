@@ -450,7 +450,7 @@ function SocialAccounts() {
     setConnecting(key)
     setError(null)
     const { error } = await supabase.auth.linkIdentity({
-      provider: provider as Parameters<typeof supabase.auth.linkIdentity>[0]['provider'],
+      provider: provider as 'google' | 'facebook' | 'apple',
       options: { redirectTo: `${window.location.origin}/conta` },
     })
     if (error) setError(error.message)

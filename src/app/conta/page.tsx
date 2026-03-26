@@ -607,7 +607,8 @@ export default function ContaPage() {
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         if (data) {
-          setOrders(data.map((o: Record<string, unknown>) => ({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setOrders(data.map((o: any) => ({
             ...o,
             items: o.order_items ?? [],
             review: o.order_reviews?.[0] ?? null,

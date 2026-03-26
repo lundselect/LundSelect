@@ -39,6 +39,7 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
       }
       return true
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, selectedBrand, selectedPrice])
 
   const hasFilters = selectedCategory || selectedBrand || selectedPrice !== null

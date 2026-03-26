@@ -17,25 +17,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  const buildUser = async (authUser: { id: string; email?: string; user_metadata?: { name?: string } }) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('customer_number')
+      .eq('id', authUser.id)
+      .single()
+    setUser({
+      id: authUser.id,
+      name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || '',
+      email: authUser.email || '',
+      customerNumber: profile?.customer_number ?? undefined,
+    })
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        setUser({
-          id: session.user.id,
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || '',
-          email: session.user.email || '',
-        })
+        buildUser(session.user)
       }
       setIsLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        setUser({
-          id: session.user.id,
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || '',
-          email: session.user.email || '',
-        })
+        buildUser(session.user)
       } else {
         setUser(null)
       }

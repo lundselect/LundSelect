@@ -432,7 +432,7 @@ function SocialAccounts() {
 
   const refreshIdentities = async () => {
     const { data } = await supabase.auth.getUser()
-    const providers = (data.user?.identities ?? []).map((i: any) => i.provider)
+    const providers = (data.user?.identities ?? []).map((i: { provider: string }) => i.provider)
     setIdentities(providers)
     setLoading(false)
   }
@@ -450,7 +450,7 @@ function SocialAccounts() {
     setConnecting(key)
     setError(null)
     const { error } = await supabase.auth.linkIdentity({
-      provider: provider as any,
+      provider: provider as Parameters<typeof supabase.auth.linkIdentity>[0]['provider'],
       options: { redirectTo: `${window.location.origin}/conta` },
     })
     if (error) setError(error.message)
@@ -459,7 +459,7 @@ function SocialAccounts() {
 
   const handleDisconnect = async (provider: string) => {
     const { data } = await supabase.auth.getUser()
-    const identity = (data.user?.identities ?? []).find((i: any) => i.provider === provider)
+    const identity = (data.user?.identities ?? []).find((i: { provider: string }) => i.provider === provider)
     if (!identity) return
     await supabase.auth.unlinkIdentity(identity)
     setIdentities(prev => prev.filter(p => p !== provider))
@@ -607,7 +607,7 @@ export default function ContaPage() {
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         if (data) {
-          setOrders(data.map((o: any) => ({
+          setOrders(data.map((o: Record<string, unknown>) => ({
             ...o,
             items: o.order_items ?? [],
             review: o.order_reviews?.[0] ?? null,

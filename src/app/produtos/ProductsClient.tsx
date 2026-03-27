@@ -7,6 +7,7 @@ import PriceRangeFilter from '@/components/ui/PriceRangeFilter'
 
 const CLOTHING_SUBCATS = ['Blusas', 'Calças', 'Vestidos', 'Macacões', 'Beachwear', 'Resortwear']
 const ACCESSORIES_SUBCATS = ['Bolsas', 'Joias', 'Chapéus', 'Beachwear']
+const SHOES_SUBCATS = ['Saltos', 'Rasteiras', 'Sandálias', 'Tênis', 'Botas', 'Mocassins', 'Mules']
 
 interface Props {
   initialCategory?: string
@@ -39,6 +40,7 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [roupasOpen, setRoupasOpen] = useState(false)
   const [acessoriosOpen, setAcessoriosOpen] = useState(false)
+  const [sapatosOpen, setSapatosOpen] = useState(false)
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -54,6 +56,9 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
         if (!all.includes(p.category.toLowerCase())) return false
       } else if (cat === 'acessórios') {
         const all = [...ACCESSORIES_SUBCATS, 'Acessórios'].map(s => s.toLowerCase())
+        if (!all.includes(p.category.toLowerCase())) return false
+      } else if (cat === 'sapatos') {
+        const all = [...SHOES_SUBCATS, 'Sapatos', 'Calçados'].map(s => s.toLowerCase())
         if (!all.includes(p.category.toLowerCase())) return false
       } else {
         if (p.category.toLowerCase() !== cat) return false
@@ -153,6 +158,33 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
                   {acessoriosOpen && (
                     <ul className="mt-3 space-y-3">
                       {ACCESSORIES_SUBCATS.map((sub) => (
+                        <li key={sub}>
+                          <button
+                            onClick={() => selectSub(sub)}
+                            className={`text-sm pl-2 transition-colors ${selectedCategory === sub ? 'text-gold' : 'text-offwhite/40 hover:text-offwhite'}`}
+                          >
+                            {sub}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+
+                {/* Sapatos */}
+                <li>
+                  <button
+                    onClick={() => setSapatosOpen(!sapatosOpen)}
+                    className={`flex items-center gap-2 text-sm w-full text-left transition-colors ${
+                      sapatosOpen || SHOES_SUBCATS.includes(selectedCategory ?? '') ? 'text-offwhite' : 'text-offwhite/50 hover:text-offwhite'
+                    }`}
+                  >
+                    <span>Sapatos</span>
+                    <ChevronIcon open={sapatosOpen} />
+                  </button>
+                  {sapatosOpen && (
+                    <ul className="mt-3 space-y-3">
+                      {SHOES_SUBCATS.map((sub) => (
                         <li key={sub}>
                           <button
                             onClick={() => selectSub(sub)}

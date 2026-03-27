@@ -5,6 +5,7 @@ export interface Brand {
   category: string
   slug: string
   description?: string
+  logo?: string
 }
 
 export interface Product {

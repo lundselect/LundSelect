@@ -8,6 +8,7 @@ export const brands: Brand[] = [
     category: 'Beachwear',
     slug: 'amalfi',
     description: 'Amalfi Swim & Resortwear é uma marca paulistana especializada em moda praia e resort de alto padrão. Com tecidos sofisticados e design atemporal, cada peça é pensada para a mulher que vive o verão com elegância — da piscina ao jantar à beira-mar.',
+    logo: '/logo-amalfi.png',
   },
   {
     id: '2',
@@ -24,6 +25,7 @@ export const brands: Brand[] = [
     category: 'Roupas',
     slug: 'dress-to',
     description: 'Nascida em Niterói, Dress To é referência em moda feminina contemporânea com preços acessíveis. Vestidos, blusas, macacões e calças com design moderno e muita personalidade — para quem quer se vestir bem sem abrir mão do estilo.',
+    logo: '/logo-dress-to.png',
   },
   {
     id: '4',
@@ -32,6 +34,7 @@ export const brands: Brand[] = [
     category: 'Resortwear',
     slug: 'pano',
     description: 'Panô é Resortwear Carioca — fundada em 2016, a marca captura a leveza e o colorido do Rio de Janeiro em kimonos, pareôs, saídas de praia e vestidos fluidos. Peças que viajam do Leblon para qualquer praia do mundo com a mesma graça.',
+    logo: '/logo-pano.png',
   },
   {
     id: '5',

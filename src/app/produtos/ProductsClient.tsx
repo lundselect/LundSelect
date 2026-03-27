@@ -14,6 +14,10 @@ interface Props {
   initialBrand?: string
   brands: Brand[]
   products: Product[]
+  heading?: string
+  subheading?: string
+  showPageHeader?: boolean
+  noContainer?: boolean
 }
 
 function ChevronIcon({ open }: { open: boolean }) {
@@ -27,7 +31,7 @@ function ChevronIcon({ open }: { open: boolean }) {
   )
 }
 
-export default function ProductsClient({ initialCategory, initialBrand, brands, products }: Props) {
+export default function ProductsClient({ initialCategory, initialBrand, brands, products, heading, subheading, showPageHeader = true, noContainer = false }: Props) {
   const minPrice = useMemo(() => Math.min(...products.map(p => p.price)), [products])
   const maxPrice = useMemo(() => Math.max(...products.map(p => p.price)), [products])
 
@@ -82,26 +86,39 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
   const isActive = (cat: string) => selectedCategory?.toLowerCase() === cat.toLowerCase()
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-10">
-        <p className="text-gold/60 text-xs tracking-[0.3em] uppercase mb-2">Catálogo</p>
-        <div className="flex items-center justify-between">
-          <h1 className="text-offwhite text-3xl font-light tracking-wide">
-            {selectedCategory
-              ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)
-              : 'Produtos'}
-          </h1>
-          <div className="flex items-center gap-4">
-            <span className="text-offwhite/30 text-sm">{filtered.length} peças</span>
-            <button
-              className="lg:hidden text-offwhite/60 hover:text-gold text-xs tracking-widest uppercase border border-gold/20 px-4 py-2 transition-colors"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              Filtros
-            </button>
+    <div className={noContainer ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'}>
+      {showPageHeader && (
+        <div className="mb-10">
+          <p className="text-gold/60 text-xs tracking-[0.3em] uppercase mb-2">{subheading ?? 'Catálogo'}</p>
+          <div className="flex items-center justify-between">
+            <h1 className="text-offwhite text-3xl font-light tracking-wide">
+              {heading ?? (selectedCategory
+                ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)
+                : 'Produtos')}
+            </h1>
+            <div className="flex items-center gap-4">
+              <span className="text-offwhite/30 text-sm">{filtered.length} peças</span>
+              <button
+                className="lg:hidden text-offwhite/60 hover:text-gold text-xs tracking-widest uppercase border border-gold/20 px-4 py-2 transition-colors"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                Filtros
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+      {!showPageHeader && (
+        <div className="mb-8 flex items-center justify-between">
+          <span className="text-offwhite/30 text-sm">{filtered.length} peças</span>
+          <button
+            className="lg:hidden text-offwhite/60 hover:text-gold text-xs tracking-widest uppercase border border-gold/20 px-4 py-2 transition-colors"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            Filtros
+          </button>
+        </div>
+      )}
 
       <div className="flex gap-12">
         <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-full lg:w-56 flex-shrink-0`}>

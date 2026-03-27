@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Metadata } from 'next'
-import { brands, getBrandBySlug, getProductsByBrand } from '@/lib/data'
-import ProductCard from '@/components/ui/ProductCard'
+import { brands, getBrandBySlug } from '@/lib/data'
+import { getBrands, getProducts } from '@/lib/queries'
+import ProductsClient from '@/app/produtos/ProductsClient'
 
 interface Props {
   params: { slug: string }
@@ -21,11 +22,11 @@ export function generateStaticParams() {
   return brands.map((b) => ({ slug: b.slug }))
 }
 
-export default function BrandPage({ params }: Props) {
+export default async function BrandPage({ params }: Props) {
   const brand = getBrandBySlug(params.slug)
   if (!brand) notFound()
 
-  const brandProducts = getProductsByBrand(params.slug)
+  const [brandList, allProducts] = await Promise.all([getBrands(), getProducts()])
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -54,29 +55,14 @@ export default function BrandPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Products */}
-      <div>
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-offwhite text-xl font-light">
-            Coleção <span className="text-offwhite/30 text-base ml-1">({brandProducts.length} peças)</span>
-          </h2>
-        </div>
-
-        {brandProducts.length === 0 ? (
-          <div className="border border-dashed border-gold/20 py-16 text-center">
-            <p className="text-offwhite/30 text-sm mb-4">Nenhuma peça disponível no momento.</p>
-            <Link href="/produtos" className="text-gold text-xs tracking-widest uppercase border border-gold/30 px-6 py-2 hover:border-gold transition-colors">
-              Ver todos os produtos
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
-            {brandProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Products with filter */}
+      <ProductsClient
+        showPageHeader={false}
+        noContainer
+        initialBrand={params.slug}
+        brands={brandList}
+        products={allProducts}
+      />
     </div>
   )
 }

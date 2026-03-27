@@ -630,27 +630,19 @@ export default function ContaPage() {
     setDadosError('')
     setDadosSaved(false)
     try {
-      const updates: { display_name?: string; phone?: string } = {}
-      if (dadosName !== user?.name) updates.display_name = dadosName
-      if (dadosPhone) updates.phone = phoneCountry.code + dadosPhone
+      // Save name and phone via auth user metadata (avoids needing extra profile columns)
+      const metaUpdates: { data?: { name?: string; phone?: string }; email?: string; password?: string } = {}
+      const meta: { name?: string; phone?: string } = {}
+      if (dadosName !== user?.name) meta.name = dadosName
+      if (dadosPhone) meta.phone = phoneCountry.code + dadosPhone
+      if (Object.keys(meta).length > 0) metaUpdates.data = meta
+      if (dadosEmail && dadosEmail !== user?.email) metaUpdates.email = dadosEmail
+      if (dadosPassword) metaUpdates.password = dadosPassword
 
-      if (Object.keys(updates).length > 0) {
-        const { error } = await supabase
-          .from('profiles')
-          .update(updates)
-          .eq('id', user!.id)
+      if (Object.keys(metaUpdates).length > 0) {
+        const { error } = await supabase.auth.updateUser(metaUpdates)
         if (error) throw error
-      }
-
-      if (dadosEmail && dadosEmail !== user?.email) {
-        const { error } = await supabase.auth.updateUser({ email: dadosEmail })
-        if (error) throw error
-      }
-
-      if (dadosPassword) {
-        const { error } = await supabase.auth.updateUser({ password: dadosPassword })
-        if (error) throw error
-        setDadosPassword('')
+        if (dadosPassword) setDadosPassword('')
       }
 
       setDadosSaved(true)

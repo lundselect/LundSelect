@@ -19,21 +19,10 @@ export default function LoginPage() {
   const { login, register } = useAuth()
   const router = useRouter()
 
-  const handleEmailContinue = async (e: React.FormEvent) => {
+  const handleEmailContinue = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
-    // Attempt login with dummy password to detect if account exists
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password: '___check___',
-    })
-    setLoading(false)
-    if (!signInError || signInError.message === 'Invalid login credentials') {
-      setStep('login')
-    } else {
-      setStep('register')
-    }
+    setStep('register')
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -56,8 +45,14 @@ export default function LoginPage() {
     setLoading(true)
     const err = await register(name, email, password)
     setLoading(false)
-    if (!err) router.push('/conta')
-    else setError(err)
+    if (!err) {
+      router.push('/conta')
+    } else if (err.toLowerCase().includes('already') || err.toLowerCase().includes('registered')) {
+      setStep('login')
+      setError('Você já tem uma conta. Entre com sua senha.')
+    } else {
+      setError(err)
+    }
   }
 
   const handleGoogle = async () => {

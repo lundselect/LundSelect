@@ -41,9 +41,18 @@ export default function MarcasParceirasPage() {
         <h2 className="text-offwhite text-xl font-light mb-8">Marcas atuais</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {brands.map((brand) => (
-            <Link key={brand.id} href={`/marcas/${brand.slug}`} className="border border-gold/10 hover:border-gold/30 p-4 transition-colors group">
-              <p className="text-offwhite/30 text-xs uppercase tracking-widest">{brand.state}</p>
-              <p className="text-offwhite group-hover:text-gold text-sm mt-1 transition-colors">{brand.name}</p>
+            <Link key={brand.id} href={`/marcas/${brand.slug}`} className="border border-gold/10 hover:border-gold/30 transition-colors group flex items-center justify-center h-28 px-6">
+              {brand.logo ? (
+                <div style={{width: '160px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={brand.logo} alt={brand.name} style={{maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', mixBlendMode: 'multiply'}} />
+                </div>
+              ) : (
+                <div className="text-center">
+                  <p className="text-offwhite/30 text-xs uppercase tracking-widest">{brand.state}</p>
+                  <p className="text-offwhite group-hover:text-gold text-sm mt-1 transition-colors">{brand.name}</p>
+                </div>
+              )}
             </Link>
           ))}
         </div>

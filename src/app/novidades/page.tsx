@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { products } from '@/lib/data'
 import ProductCard from '@/components/ui/ProductCard'
+import PriceRangeFilter from '@/components/ui/PriceRangeFilter'
 
 const FILTERS = [
   { label: 'Roupas', categories: ['Roupas', 'Blusas', 'Calças', 'Vestidos', 'Macacões', 'Beachwear', 'Resortwear'] },
@@ -14,10 +15,12 @@ const FILTERS = [
 
 export default function NovidadesPage() {
   const newProducts = useMemo(() => products.filter(p => p.isNew), [])
+  const minPrice = useMemo(() => Math.min(...newProducts.map(p => p.price)), [newProducts])
   const maxPrice = useMemo(() => Math.max(...newProducts.map(p => p.price)), [newProducts])
 
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
-  const [priceMax, setPriceMax] = useState<number>(maxPrice)
+  const [priceMin, setPriceMin] = useState(minPrice)
+  const [priceMax, setPriceMax] = useState(maxPrice)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const filtered = useMemo(() => {
@@ -27,19 +30,19 @@ export default function NovidadesPage() {
       const cats = FILTERS.find(f => f.label === activeFilter)?.categories ?? []
       result = result.filter(p => cats.map(c => c.toLowerCase()).includes(p.category.toLowerCase()))
     }
-    return result.filter(p => p.price <= priceMax)
-  }, [activeFilter, priceMax, newProducts])
+    return result.filter(p => p.price >= priceMin && p.price <= priceMax)
+  }, [activeFilter, priceMin, priceMax, newProducts])
 
-  const hasFilters = activeFilter !== null || priceMax < maxPrice
+  const hasFilters = activeFilter !== null || priceMin > minPrice || priceMax < maxPrice
 
   const clearFilters = () => {
     setActiveFilter(null)
+    setPriceMin(minPrice)
     setPriceMax(maxPrice)
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Header */}
       <div className="mb-10">
         <p className="text-gold/60 text-xs tracking-[0.3em] uppercase mb-2">Novidades</p>
         <div className="flex items-center justify-between">
@@ -57,7 +60,6 @@ export default function NovidadesPage() {
       </div>
 
       <div className="flex gap-12">
-        {/* Sidebar */}
         <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-full lg:w-56 flex-shrink-0`}>
           <div className="sticky top-24 space-y-8">
             {hasFilters && (
@@ -94,35 +96,20 @@ export default function NovidadesPage() {
               </ul>
             </div>
 
-            {/* Price slider */}
+            {/* Price */}
             <div>
               <h3 className="text-offwhite/40 text-xs tracking-[0.3em] uppercase mb-4">Preço</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between text-xs text-offwhite/40">
-                  <span>R$ 0</span>
-                  <span className={priceMax < maxPrice ? 'text-gold' : ''}>
-                    R$ {priceMax.toLocaleString('pt-BR')}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={maxPrice}
-                  step={10}
-                  value={priceMax}
-                  onChange={(e) => setPriceMax(Number(e.target.value))}
-                  className="w-full accent-gold cursor-pointer"
-                />
-                <div className="flex justify-between text-xs text-offwhite/25">
-                  <span>mín</span>
-                  <span>máx</span>
-                </div>
-              </div>
+              <PriceRangeFilter
+                min={minPrice}
+                max={maxPrice}
+                valueMin={priceMin}
+                valueMax={priceMax}
+                onChange={(mn, mx) => { setPriceMin(mn); setPriceMax(mx) }}
+              />
             </div>
           </div>
         </aside>
 
-        {/* Grid */}
         <div className="flex-1">
           {filtered.length === 0 ? (
             <div className="text-center py-24 space-y-4">

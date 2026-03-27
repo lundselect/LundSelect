@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Brand, Product } from '@/types'
 import ProductCard from '@/components/ui/ProductCard'
+import PriceRangeFilter from '@/components/ui/PriceRangeFilter'
 
 interface Props {
   initialCategory?: string
@@ -12,13 +13,15 @@ interface Props {
 }
 
 export default function ProductsClient({ initialCategory, initialBrand, brands, products }: Props) {
+  const minPrice = useMemo(() => Math.min(...products.map(p => p.price)), [products])
   const maxPrice = useMemo(() => Math.max(...products.map(p => p.price)), [products])
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     initialCategory ? decodeURIComponent(initialCategory) : null
   )
   const [selectedBrand, setSelectedBrand] = useState<string | null>(initialBrand || null)
-  const [priceMax, setPriceMax] = useState<number>(maxPrice)
+  const [priceMin, setPriceMin] = useState(minPrice)
+  const [priceMax, setPriceMax] = useState(maxPrice)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const filtered = useMemo(() => {
@@ -28,16 +31,17 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
       if (cat === 'sale' && !p.onSale) return false
       if (cat && cat !== 'novidades' && cat !== 'sale' && p.category.toLowerCase() !== cat) return false
       if (selectedBrand && p.brandSlug !== selectedBrand) return false
-      if (p.price > priceMax) return false
+      if (p.price < priceMin || p.price > priceMax) return false
       return true
     })
-  }, [selectedCategory, selectedBrand, priceMax, products])
+  }, [selectedCategory, selectedBrand, priceMin, priceMax, products])
 
-  const hasFilters = selectedCategory || selectedBrand || priceMax < maxPrice
+  const hasFilters = selectedCategory || selectedBrand || priceMin > minPrice || priceMax < maxPrice
 
   const clearFilters = () => {
     setSelectedCategory(null)
     setSelectedBrand(null)
+    setPriceMin(minPrice)
     setPriceMax(maxPrice)
   }
 
@@ -64,7 +68,6 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
       </div>
 
       <div className="flex gap-12">
-        {/* Sidebar */}
         <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-full lg:w-56 flex-shrink-0`}>
           <div className="sticky top-24 space-y-8">
             {hasFilters && (
@@ -110,35 +113,20 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
               </ul>
             </div>
 
-            {/* Price slider */}
+            {/* Price */}
             <div>
               <h3 className="text-offwhite/40 text-xs tracking-[0.3em] uppercase mb-4">Preço</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between text-xs text-offwhite/40">
-                  <span>R$ 0</span>
-                  <span className={priceMax < maxPrice ? 'text-gold' : ''}>
-                    R$ {priceMax.toLocaleString('pt-BR')}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={maxPrice}
-                  step={10}
-                  value={priceMax}
-                  onChange={(e) => setPriceMax(Number(e.target.value))}
-                  className="w-full accent-gold cursor-pointer"
-                />
-                <div className="flex justify-between text-xs text-offwhite/25">
-                  <span>mín</span>
-                  <span>máx</span>
-                </div>
-              </div>
+              <PriceRangeFilter
+                min={minPrice}
+                max={maxPrice}
+                valueMin={priceMin}
+                valueMax={priceMax}
+                onChange={(mn, mx) => { setPriceMin(mn); setPriceMax(mx) }}
+              />
             </div>
           </div>
         </aside>
 
-        {/* Grid */}
         <div className="flex-1">
           {filtered.length === 0 ? (
             <div className="text-center py-24 space-y-4">

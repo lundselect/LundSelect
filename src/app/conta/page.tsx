@@ -188,7 +188,7 @@ interface Order {
 
 const quickLinks = [
   { label: 'Ajuda', icon: '💬', section: null, modal: null, href: '/ajuda' },
-  { label: 'Trocar senha', icon: '🔑', section: 'dados', modal: null },
+  { label: 'Trocar senha', icon: '🔑', section: null, modal: null, href: '/trocar-senha' },
   { label: 'Avaliar site', icon: '★', section: null, modal: 'rate' },
   { label: 'Sugerir melhoria', icon: '💡', section: null, modal: 'feedback' },
 ]

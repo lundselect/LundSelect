@@ -8,22 +8,33 @@ export default function AuthCallback() {
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const handle = async () => {
+      // Wait a moment for Supabase to process the session from hash/code
+      await new Promise(res => setTimeout(res, 500))
+
+      // Try exchanging code if present in query params
+      const code = new URLSearchParams(window.location.search).get('code')
+      if (code) {
+        await supabase.auth.exchangeCodeForSession(code)
+      }
+
+      // Check if session exists
+      const { data: { session } } = await supabase.auth.getSession()
       if (session) {
         router.replace('/conta')
       } else {
-        // Exchange code for session (PKCE flow)
-        const code = new URLSearchParams(window.location.search).get('code')
-        if (code) {
-          supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-            if (error) router.replace('/login')
-            else router.replace('/conta')
-          })
-        } else {
-          router.replace('/login')
-        }
+        // Listen for auth state change (handles hash fragment flow)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (session) {
+            subscription.unsubscribe()
+            router.replace('/conta')
+          }
+        })
+        // Fallback timeout
+        setTimeout(() => router.replace('/login'), 5000)
       }
-    })
+    }
+    handle()
   }, [router])
 
   return (

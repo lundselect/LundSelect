@@ -4,13 +4,6 @@ import { useState, useMemo } from 'react'
 import { Brand, Product } from '@/types'
 import ProductCard from '@/components/ui/ProductCard'
 
-const priceRanges = [
-  { label: 'Até R$ 200', min: 0, max: 200 },
-  { label: 'R$ 200 – R$ 400', min: 200, max: 400 },
-  { label: 'R$ 400 – R$ 600', min: 400, max: 600 },
-  { label: 'Acima de R$ 600', min: 600, max: Infinity },
-]
-
 interface Props {
   initialCategory?: string
   initialBrand?: string
@@ -19,11 +12,13 @@ interface Props {
 }
 
 export default function ProductsClient({ initialCategory, initialBrand, brands, products }: Props) {
+  const maxPrice = useMemo(() => Math.max(...products.map(p => p.price)), [products])
+
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     initialCategory ? decodeURIComponent(initialCategory) : null
   )
   const [selectedBrand, setSelectedBrand] = useState<string | null>(initialBrand || null)
-  const [selectedPrice, setSelectedPrice] = useState<number | null>(null)
+  const [priceMax, setPriceMax] = useState<number>(maxPrice)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const filtered = useMemo(() => {
@@ -33,16 +28,18 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
       if (cat === 'sale' && !p.onSale) return false
       if (cat && cat !== 'novidades' && cat !== 'sale' && p.category.toLowerCase() !== cat) return false
       if (selectedBrand && p.brandSlug !== selectedBrand) return false
-      if (selectedPrice !== null) {
-        const range = priceRanges[selectedPrice]
-        if (p.price < range.min || p.price > range.max) return false
-      }
+      if (p.price > priceMax) return false
       return true
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, selectedBrand, selectedPrice])
+  }, [selectedCategory, selectedBrand, priceMax, products])
 
-  const hasFilters = selectedCategory || selectedBrand || selectedPrice !== null
+  const hasFilters = selectedCategory || selectedBrand || priceMax < maxPrice
+
+  const clearFilters = () => {
+    setSelectedCategory(null)
+    setSelectedBrand(null)
+    setPriceMax(maxPrice)
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -50,7 +47,9 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
         <p className="text-gold/60 text-xs tracking-[0.3em] uppercase mb-2">Catálogo</p>
         <div className="flex items-center justify-between">
           <h1 className="text-offwhite text-3xl font-light tracking-wide">
-            {selectedCategory ? decodeURIComponent(selectedCategory).charAt(0).toUpperCase() + decodeURIComponent(selectedCategory).slice(1) : 'Produtos'}
+            {selectedCategory
+              ? decodeURIComponent(selectedCategory).charAt(0).toUpperCase() + decodeURIComponent(selectedCategory).slice(1)
+              : 'Produtos'}
           </h1>
           <div className="flex items-center gap-4">
             <span className="text-offwhite/30 text-sm">{filtered.length} peças</span>
@@ -70,7 +69,7 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
           <div className="sticky top-24 space-y-8">
             {hasFilters && (
               <button
-                onClick={() => { setSelectedCategory(null); setSelectedBrand(null); setSelectedPrice(null) }}
+                onClick={clearFilters}
                 className="text-gold/60 hover:text-gold text-xs tracking-widest uppercase transition-colors"
               >
                 Limpar filtros ×
@@ -111,21 +110,30 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
               </ul>
             </div>
 
-            {/* Price */}
+            {/* Price slider */}
             <div>
               <h3 className="text-offwhite/40 text-xs tracking-[0.3em] uppercase mb-4">Preço</h3>
-              <ul className="space-y-3">
-                {priceRanges.map((range, i) => (
-                  <li key={i}>
-                    <button
-                      onClick={() => setSelectedPrice(selectedPrice === i ? null : i)}
-                      className={`text-sm transition-colors ${selectedPrice === i ? 'text-gold' : 'text-offwhite/50 hover:text-offwhite'}`}
-                    >
-                      {range.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <div className="space-y-3">
+                <div className="flex justify-between text-xs text-offwhite/40">
+                  <span>R$ 0</span>
+                  <span className={priceMax < maxPrice ? 'text-gold' : ''}>
+                    R$ {priceMax.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={maxPrice}
+                  step={10}
+                  value={priceMax}
+                  onChange={(e) => setPriceMax(Number(e.target.value))}
+                  className="w-full accent-gold cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-offwhite/25">
+                  <span>mín</span>
+                  <span>máx</span>
+                </div>
+              </div>
             </div>
           </div>
         </aside>
@@ -136,7 +144,7 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
             <div className="text-center py-24 space-y-4">
               <p className="text-offwhite/30 text-sm">Nenhuma peça encontrada com esses filtros.</p>
               <button
-                onClick={() => { setSelectedCategory(null); setSelectedBrand(null); setSelectedPrice(null) }}
+                onClick={clearFilters}
                 className="text-gold text-xs tracking-widest uppercase border border-gold/30 px-6 py-2 hover:border-gold transition-colors"
               >
                 Ver todos os produtos

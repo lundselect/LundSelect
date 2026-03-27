@@ -13,17 +13,29 @@ const FILTERS = [
 ]
 
 export default function NovidadesPage() {
+  const newProducts = useMemo(() => products.filter(p => p.isNew), [])
+  const maxPrice = useMemo(() => Math.max(...newProducts.map(p => p.price)), [newProducts])
+
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
+  const [priceMax, setPriceMax] = useState<number>(maxPrice)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  const newProducts = useMemo(() => products.filter(p => p.isNew), [])
-
   const filtered = useMemo(() => {
-    if (!activeFilter) return newProducts
-    if (activeFilter === 'Sale') return newProducts.filter(p => p.onSale)
-    const cats = FILTERS.find(f => f.label === activeFilter)?.categories ?? []
-    return newProducts.filter(p => cats.map(c => c.toLowerCase()).includes(p.category.toLowerCase()))
-  }, [activeFilter, newProducts])
+    let result = newProducts
+    if (activeFilter === 'Sale') result = result.filter(p => p.onSale)
+    else if (activeFilter) {
+      const cats = FILTERS.find(f => f.label === activeFilter)?.categories ?? []
+      result = result.filter(p => cats.map(c => c.toLowerCase()).includes(p.category.toLowerCase()))
+    }
+    return result.filter(p => p.price <= priceMax)
+  }, [activeFilter, priceMax, newProducts])
+
+  const hasFilters = activeFilter !== null || priceMax < maxPrice
+
+  const clearFilters = () => {
+    setActiveFilter(null)
+    setPriceMax(maxPrice)
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -47,29 +59,66 @@ export default function NovidadesPage() {
       <div className="flex gap-12">
         {/* Sidebar */}
         <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-full lg:w-56 flex-shrink-0`}>
-          <div className="sticky top-24 space-y-2">
-            <h3 className="text-offwhite/40 text-xs tracking-[0.3em] uppercase mb-4">Categoria</h3>
-
-            <button
-              onClick={() => setActiveFilter(null)}
-              className={`w-full text-left py-2 text-sm transition-colors ${
-                activeFilter === null ? 'text-gold' : 'text-offwhite/50 hover:text-offwhite'
-              }`}
-            >
-              Todos
-            </button>
-
-            {FILTERS.map((f) => (
+          <div className="sticky top-24 space-y-8">
+            {hasFilters && (
               <button
-                key={f.label}
-                onClick={() => setActiveFilter(activeFilter === f.label ? null : f.label)}
-                className={`w-full text-left py-2 text-sm transition-colors ${
-                  activeFilter === f.label ? 'text-gold' : 'text-offwhite/50 hover:text-offwhite'
-                }`}
+                onClick={clearFilters}
+                className="text-gold/60 hover:text-gold text-xs tracking-widest uppercase transition-colors"
               >
-                {f.label}
+                Limpar filtros ×
               </button>
-            ))}
+            )}
+
+            {/* Category */}
+            <div>
+              <h3 className="text-offwhite/40 text-xs tracking-[0.3em] uppercase mb-4">Categoria</h3>
+              <ul className="space-y-3">
+                <li>
+                  <button
+                    onClick={() => setActiveFilter(null)}
+                    className={`text-sm transition-colors ${activeFilter === null ? 'text-gold' : 'text-offwhite/50 hover:text-offwhite'}`}
+                  >
+                    Todos
+                  </button>
+                </li>
+                {FILTERS.map((f) => (
+                  <li key={f.label}>
+                    <button
+                      onClick={() => setActiveFilter(activeFilter === f.label ? null : f.label)}
+                      className={`text-sm transition-colors ${activeFilter === f.label ? 'text-gold' : 'text-offwhite/50 hover:text-offwhite'}`}
+                    >
+                      {f.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Price slider */}
+            <div>
+              <h3 className="text-offwhite/40 text-xs tracking-[0.3em] uppercase mb-4">Preço</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between text-xs text-offwhite/40">
+                  <span>R$ 0</span>
+                  <span className={priceMax < maxPrice ? 'text-gold' : ''}>
+                    R$ {priceMax.toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={maxPrice}
+                  step={10}
+                  value={priceMax}
+                  onChange={(e) => setPriceMax(Number(e.target.value))}
+                  className="w-full accent-gold cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-offwhite/25">
+                  <span>mín</span>
+                  <span>máx</span>
+                </div>
+              </div>
+            </div>
           </div>
         </aside>
 
@@ -79,7 +128,7 @@ export default function NovidadesPage() {
             <div className="text-center py-24 space-y-4">
               <p className="text-offwhite/30 text-sm">Nenhuma peça encontrada nesta categoria.</p>
               <button
-                onClick={() => setActiveFilter(null)}
+                onClick={clearFilters}
                 className="text-gold text-xs tracking-widest uppercase border border-gold/30 px-6 py-2 hover:border-gold transition-colors"
               >
                 Ver todas as novidades

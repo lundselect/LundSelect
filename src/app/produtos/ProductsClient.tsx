@@ -92,33 +92,25 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
 
                 {/* Roupas with expandable subcategories */}
                 <li>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setSelectedCategory(selectedCategory?.toLowerCase() === 'roupas' ? null : 'Roupas')}
-                      className={`text-sm transition-colors ${selectedCategory?.toLowerCase() === 'roupas' ? 'text-gold' : 'text-offwhite/50 hover:text-offwhite'}`}
+                  <button
+                    onClick={() => setRoupasOpen(!roupasOpen)}
+                    className={`flex items-center gap-2 text-sm transition-colors w-full text-left ${roupasOpen || CLOTHING_SUBCATS.includes(selectedCategory ?? '') ? 'text-offwhite' : 'text-offwhite/50 hover:text-offwhite'}`}
+                  >
+                    <span>Roupas</span>
+                    <svg
+                      className={`w-3 h-3 transition-transform duration-200 flex-shrink-0 ${roupasOpen ? 'rotate-180' : ''}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
                     >
-                      Roupas
-                    </button>
-                    <button
-                      onClick={() => setRoupasOpen(!roupasOpen)}
-                      className="text-offwhite/30 hover:text-offwhite transition-colors"
-                      aria-label="Expandir subcategorias"
-                    >
-                      <svg
-                        className={`w-3 h-3 transition-transform duration-200 ${roupasOpen ? 'rotate-180' : ''}`}
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  </div>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
                   {roupasOpen && (
-                    <ul className="mt-2 ml-3 space-y-2 border-l border-gold/10 pl-3">
+                    <ul className="mt-3 space-y-3">
                       {CLOTHING_SUBCATS.map((sub) => (
                         <li key={sub}>
                           <button
                             onClick={() => setSelectedCategory(selectedCategory === sub ? null : sub)}
-                            className={`text-xs transition-colors ${selectedCategory === sub ? 'text-gold' : 'text-offwhite/40 hover:text-offwhite/70'}`}
+                            className={`text-sm transition-colors pl-2 ${selectedCategory === sub ? 'text-gold' : 'text-offwhite/40 hover:text-offwhite'}`}
                           >
                             {sub}
                           </button>

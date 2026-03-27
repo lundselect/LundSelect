@@ -599,6 +599,13 @@ export default function ContaPage() {
   const router = useRouter()
   const [activeSection, setActiveSection] = useState('dados')
   const [phoneCountry, setPhoneCountry] = useState(COUNTRY_CODES[0])
+  const [dadosName, setDadosName] = useState('')
+  const [dadosEmail, setDadosEmail] = useState('')
+  const [dadosPhone, setDadosPhone] = useState('')
+  const [dadosPassword, setDadosPassword] = useState('')
+  const [dadosSaving, setDadosSaving] = useState(false)
+  const [dadosSaved, setDadosSaved] = useState(false)
+  const [dadosError, setDadosError] = useState('')
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [modal, setModal] = useState<'rate' | 'feedback' | null>(null)
@@ -610,6 +617,49 @@ export default function ContaPage() {
   useEffect(() => {
     if (!isLoading && !user) router.push('/login')
   }, [user, isLoading, router])
+
+  useEffect(() => {
+    if (user) {
+      setDadosName(user.name ?? '')
+      setDadosEmail(user.email ?? '')
+    }
+  }, [user])
+
+  const handleSaveDados = async () => {
+    setDadosSaving(true)
+    setDadosError('')
+    setDadosSaved(false)
+    try {
+      const updates: { display_name?: string; phone?: string } = {}
+      if (dadosName !== user?.name) updates.display_name = dadosName
+      if (dadosPhone) updates.phone = phoneCountry.code + dadosPhone
+
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', user!.id)
+        if (error) throw error
+      }
+
+      if (dadosEmail && dadosEmail !== user?.email) {
+        const { error } = await supabase.auth.updateUser({ email: dadosEmail })
+        if (error) throw error
+      }
+
+      if (dadosPassword) {
+        const { error } = await supabase.auth.updateUser({ password: dadosPassword })
+        if (error) throw error
+        setDadosPassword('')
+      }
+
+      setDadosSaved(true)
+      setTimeout(() => setDadosSaved(false), 3000)
+    } catch (err: unknown) {
+      setDadosError(err instanceof Error ? err.message : 'Erro ao salvar')
+    }
+    setDadosSaving(false)
+  }
 
   useEffect(() => {
     if (!user) return
@@ -830,11 +880,11 @@ export default function ContaPage() {
                 )}
                 <div>
                   <label className="block text-offwhite/40 text-xs tracking-widest uppercase mb-2">Nome completo</label>
-                  <input defaultValue={user.name} className="w-full bg-offwhite/5 border border-gold/20 text-offwhite px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors" />
+                  <input value={dadosName} onChange={(e) => setDadosName(e.target.value)} className="w-full bg-offwhite/5 border border-gold/20 text-offwhite px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors" />
                 </div>
                 <div>
                   <label className="block text-offwhite/40 text-xs tracking-widest uppercase mb-2">E-mail</label>
-                  <input defaultValue={user.email} type="email" className="w-full bg-offwhite/5 border border-gold/20 text-offwhite px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors" />
+                  <input value={dadosEmail} onChange={(e) => setDadosEmail(e.target.value)} type="email" className="w-full bg-offwhite/5 border border-gold/20 text-offwhite px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors" />
                 </div>
                 <div>
                   <label className="block text-offwhite/40 text-xs tracking-widest uppercase mb-2">Telefone</label>
@@ -859,6 +909,8 @@ export default function ContaPage() {
                       </span>
                       <input
                         type="tel"
+                        value={dadosPhone}
+                        onChange={(e) => setDadosPhone(e.target.value)}
                         placeholder="(11) 99999-9999"
                         className="flex-1 bg-offwhite/5 border border-gold/20 text-offwhite placeholder-offwhite/20 px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors"
                       />
@@ -867,11 +919,16 @@ export default function ContaPage() {
                   <p className="text-offwhite/20 text-xs mt-1">Para atualizações de entrega por SMS</p>
                 </div>
                 <div>
-                  <label className="block text-offwhite/40 text-xs tracking-widest uppercase mb-2">Senha</label>
-                  <input type="password" placeholder="••••••••" className="w-full bg-offwhite/5 border border-gold/20 text-offwhite placeholder-offwhite/20 px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors" />
+                  <label className="block text-offwhite/40 text-xs tracking-widest uppercase mb-2">Nova senha</label>
+                  <input type="password" value={dadosPassword} onChange={(e) => setDadosPassword(e.target.value)} placeholder="Deixe em branco para não alterar" className="w-full bg-offwhite/5 border border-gold/20 text-offwhite placeholder-offwhite/20 px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors" />
                 </div>
-                <button className="bg-gold text-primary px-8 py-3 text-xs tracking-[0.2em] uppercase hover:bg-gold/90 transition-colors">
-                  Salvar
+                {dadosError && <p className="text-red-400 text-xs">{dadosError}</p>}
+                <button
+                  onClick={handleSaveDados}
+                  disabled={dadosSaving}
+                  className="bg-gold text-primary px-8 py-3 text-xs tracking-[0.2em] uppercase hover:bg-gold/90 transition-colors disabled:opacity-50"
+                >
+                  {dadosSaving ? 'Salvando...' : dadosSaved ? 'Salvo ✓' : 'Salvar'}
                 </button>
               </div>
             </div>

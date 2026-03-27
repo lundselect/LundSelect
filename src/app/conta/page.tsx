@@ -8,6 +8,24 @@ import { products } from '@/lib/data'
 import { supabase } from '@/lib/supabase'
 import AddressSection from './AddressSection'
 
+const COUNTRY_CODES = [
+  { name: 'Brasil', code: '+55', flag: '🇧🇷' },
+  { name: 'Portugal', code: '+351', flag: '🇵🇹' },
+  { name: 'Estados Unidos', code: '+1', flag: '🇺🇸' },
+  { name: 'Reino Unido', code: '+44', flag: '🇬🇧' },
+  { name: 'França', code: '+33', flag: '🇫🇷' },
+  { name: 'Alemanha', code: '+49', flag: '🇩🇪' },
+  { name: 'Itália', code: '+39', flag: '🇮🇹' },
+  { name: 'Espanha', code: '+34', flag: '🇪🇸' },
+  { name: 'Argentina', code: '+54', flag: '🇦🇷' },
+  { name: 'México', code: '+52', flag: '🇲🇽' },
+  { name: 'Japão', code: '+81', flag: '🇯🇵' },
+  { name: 'Austrália', code: '+61', flag: '🇦🇺' },
+  { name: 'Canadá', code: '+1', flag: '🇨🇦' },
+  { name: 'China', code: '+86', flag: '🇨🇳' },
+  { name: 'Emirados Árabes', code: '+971', flag: '🇦🇪' },
+]
+
 const TIERS = [
   { name: 'Membro', min: 0, max: 499, multiplier: 1, color: 'text-offwhite/60', border: 'border-offwhite/20', benefits: ['1 ponto por R$1 gasto', 'Acesso antecipado a novidades'] },
   { name: 'Prata', min: 500, max: 1499, multiplier: 1.5, color: 'text-slate-300', border: 'border-slate-400/40', benefits: ['1,5 pontos por R$1 gasto', '5% de desconto em todas as compras', 'Frete grátis acima de R$500'] },
@@ -580,6 +598,7 @@ export default function ContaPage() {
   const { favoriteIds } = useFavorites()
   const router = useRouter()
   const [activeSection, setActiveSection] = useState('dados')
+  const [phoneCountry, setPhoneCountry] = useState(COUNTRY_CODES[0])
   const [orders, setOrders] = useState<Order[]>([])
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [modal, setModal] = useState<'rate' | 'feedback' | null>(null)
@@ -819,7 +838,32 @@ export default function ContaPage() {
                 </div>
                 <div>
                   <label className="block text-offwhite/40 text-xs tracking-widest uppercase mb-2">Telefone</label>
-                  <input type="tel" placeholder="+55 (11) 99999-9999" className="w-full bg-offwhite/5 border border-gold/20 text-offwhite placeholder-offwhite/20 px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors" />
+                  <div className="space-y-2">
+                    <select
+                      value={phoneCountry.code + '|' + phoneCountry.name}
+                      onChange={(e) => {
+                        const [code, name] = e.target.value.split('|')
+                        setPhoneCountry(COUNTRY_CODES.find(c => c.code === code && c.name === name) ?? COUNTRY_CODES[0])
+                      }}
+                      className="w-full bg-offwhite/5 border border-gold/20 text-offwhite px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors appearance-none cursor-pointer"
+                    >
+                      {COUNTRY_CODES.map((c) => (
+                        <option key={c.name} value={c.code + '|' + c.name} className="bg-primary text-offwhite">
+                          {c.flag} {c.name} ({c.code})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex">
+                      <span className="bg-offwhite/5 border border-r-0 border-gold/20 text-offwhite/60 px-3 py-3 text-sm flex-shrink-0">
+                        {phoneCountry.code}
+                      </span>
+                      <input
+                        type="tel"
+                        placeholder="(11) 99999-9999"
+                        className="flex-1 bg-offwhite/5 border border-gold/20 text-offwhite placeholder-offwhite/20 px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors"
+                      />
+                    </div>
+                  </div>
                   <p className="text-offwhite/20 text-xs mt-1">Para atualizações de entrega por SMS</p>
                 </div>
                 <div>

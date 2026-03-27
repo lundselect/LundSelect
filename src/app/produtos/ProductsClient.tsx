@@ -23,18 +23,24 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
   const [priceMin, setPriceMin] = useState(minPrice)
   const [priceMax, setPriceMax] = useState(maxPrice)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [roupasOpen, setRoupasOpen] = useState(false)
+
+  const CLOTHING_SUBCATS = ['Blusas', 'Calças', 'Vestidos', 'Macacões', 'Beachwear', 'Resortwear']
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
       const cat = selectedCategory?.toLowerCase()
       if (cat === 'novidades' && !p.isNew) return false
       if (cat === 'sale' && !p.onSale) return false
-      if (cat && cat !== 'novidades' && cat !== 'sale' && p.category.toLowerCase() !== cat) return false
+      if (cat === 'roupas') {
+        const allClothing = CLOTHING_SUBCATS.map(s => s.toLowerCase())
+        if (!allClothing.includes(p.category.toLowerCase()) && p.category.toLowerCase() !== 'roupas') return false
+      } else if (cat && cat !== 'novidades' && cat !== 'sale' && p.category.toLowerCase() !== cat) return false
       if (selectedBrand && p.brandSlug !== selectedBrand) return false
       if (p.price < priceMin || p.price > priceMax) return false
       return true
     })
-  }, [selectedCategory, selectedBrand, priceMin, priceMax, products])
+  }, [selectedCategory, selectedBrand, priceMin, priceMax, products, CLOTHING_SUBCATS])
 
   const hasFilters = selectedCategory || selectedBrand || priceMin > minPrice || priceMax < maxPrice
 
@@ -83,7 +89,47 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
             <div>
               <h3 className="text-offwhite/40 text-xs tracking-[0.3em] uppercase mb-4">Categoria</h3>
               <ul className="space-y-3">
-                {['Roupas', 'Acessórios', 'Novidades', 'Sale'].map((cat) => (
+
+                {/* Roupas with expandable subcategories */}
+                <li>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedCategory(selectedCategory?.toLowerCase() === 'roupas' ? null : 'Roupas')}
+                      className={`text-sm transition-colors ${selectedCategory?.toLowerCase() === 'roupas' ? 'text-gold' : 'text-offwhite/50 hover:text-offwhite'}`}
+                    >
+                      Roupas
+                    </button>
+                    <button
+                      onClick={() => setRoupasOpen(!roupasOpen)}
+                      className="text-offwhite/30 hover:text-offwhite transition-colors"
+                      aria-label="Expandir subcategorias"
+                    >
+                      <svg
+                        className={`w-3 h-3 transition-transform duration-200 ${roupasOpen ? 'rotate-180' : ''}`}
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                  {roupasOpen && (
+                    <ul className="mt-2 ml-3 space-y-2 border-l border-gold/10 pl-3">
+                      {CLOTHING_SUBCATS.map((sub) => (
+                        <li key={sub}>
+                          <button
+                            onClick={() => setSelectedCategory(selectedCategory === sub ? null : sub)}
+                            className={`text-xs transition-colors ${selectedCategory === sub ? 'text-gold' : 'text-offwhite/40 hover:text-offwhite/70'}`}
+                          >
+                            {sub}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+
+                {/* Other top-level categories */}
+                {['Acessórios', 'Novidades', 'Sale'].map((cat) => (
                   <li key={cat}>
                     <button
                       onClick={() => setSelectedCategory(selectedCategory?.toLowerCase() === cat.toLowerCase() ? null : cat)}

@@ -451,7 +451,7 @@ function SocialAccounts() {
     setError(null)
     const { error } = await supabase.auth.linkIdentity({
       provider: provider as 'google' | 'facebook' | 'apple',
-      options: { redirectTo: `${window.location.origin}/conta` },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
     if (error) setError(error.message)
     setConnecting(null)

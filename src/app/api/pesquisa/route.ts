@@ -1,8 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   const data = await req.json()
 
+  // Save to Supabase
+  const { error: dbError } = await supabase.from('survey_responses').insert({
+    location: data.location,
+    age: data.age,
+    gender: data.gender,
+    frequency: data.frequency,
+    brand_count: data.brandCount,
+    channels: data.channels ?? [],
+    abandoned: data.abandoned,
+    abandon_reasons: data.abandonReasons ?? [],
+    instagram_rating: data.instagramRating,
+    shipping: data.shipping,
+    outfit_ease: data.outfitEase,
+    categories: data.categories ?? [],
+    budget: data.budget,
+    interest: data.interest,
+    platform_features: data.platformFeatures ?? [],
+    favorite_brands: data.favoriteBrands,
+    newsletter: data.newsletter,
+    email: data.email ?? null,
+  })
+
+  if (dbError) console.error('Supabase insert error:', dbError)
+
+  // Also send email notification
   const lines = [
     `Pesquisa de cliente — Lund Select`,
     `─────────────────────────────────`,
@@ -26,7 +52,7 @@ export async function POST(req: NextRequest) {
     `17. Quer receber novidades da Lund Select? ${data.newsletter} ${data.email ? `— ${data.email}` : ''}`,
   ].join('\n')
 
-  const res = await fetch('https://api.resend.com/emails', {
+  await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -40,6 +66,5 @@ export async function POST(req: NextRequest) {
     }),
   })
 
-  if (!res.ok) return NextResponse.json({ error: 'Failed to send' }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

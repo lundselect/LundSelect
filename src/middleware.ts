@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Allow the survey page and its API route
+  // Allow the survey page, admin dashboard, and API routes
   if (
     pathname === '/pesquisa' ||
+    pathname.startsWith('/admin/pesquisa') ||
     pathname.startsWith('/api/pesquisa') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/icons') ||

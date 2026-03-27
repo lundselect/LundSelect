@@ -818,6 +818,11 @@ export default function ContaPage() {
                   <input defaultValue={user.email} type="email" className="w-full bg-offwhite/5 border border-gold/20 text-offwhite px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors" />
                 </div>
                 <div>
+                  <label className="block text-offwhite/40 text-xs tracking-widest uppercase mb-2">Telefone</label>
+                  <input type="tel" placeholder="+55 (11) 99999-9999" className="w-full bg-offwhite/5 border border-gold/20 text-offwhite placeholder-offwhite/20 px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors" />
+                  <p className="text-offwhite/20 text-xs mt-1">Para atualizações de entrega por SMS</p>
+                </div>
+                <div>
                   <label className="block text-offwhite/40 text-xs tracking-widest uppercase mb-2">Senha</label>
                   <input type="password" placeholder="••••••••" className="w-full bg-offwhite/5 border border-gold/20 text-offwhite placeholder-offwhite/20 px-4 py-3 text-sm focus:outline-none focus:border-gold/60 transition-colors" />
                 </div>

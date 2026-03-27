@@ -48,7 +48,7 @@ const megaMenus: Record<string, { columns: { title: string; links: { label: stri
       {
         title: 'Em destaque',
         links: [
-          { label: 'Recém chegados', href: '/produtos?categoria=novidades' },
+          { label: 'Shop new arrivals', href: '/novidades' },
           { label: 'Mais vendidos', href: '/produtos?ordenar=mais-vendidos' },
           { label: 'Tendências', href: '/produtos?categoria=tendencias' },
         ],

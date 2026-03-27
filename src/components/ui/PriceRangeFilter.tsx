@@ -43,22 +43,41 @@ export default function PriceRangeFilter({ min, max, valueMin, valueMax, onChang
 
   return (
     <div className="space-y-5">
+      {/* Preset buttons — shown first, right below PREÇO heading */}
+      <div className="space-y-2">
+        {PRESETS.map((p) => {
+          const isActive = p === activePreset
+          const effectiveMax = p.max === Infinity ? max : p.max
+          return (
+            <button
+              key={p.label}
+              onClick={() => onChange(p.min, effectiveMax)}
+              className={`w-full text-left text-sm py-1 transition-colors ${
+                isActive ? 'text-gold' : 'text-offwhite/50 hover:text-offwhite'
+              }`}
+            >
+              {p.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Divider */}
+      <div className="h-px bg-gold/10" />
+
       {/* Current range display */}
-      <div className="flex justify-between text-xs">
-        <span className="text-gold">{fmt(valueMin)}</span>
-        <span className="text-gold">{valueMax >= max ? fmt(max) : fmt(valueMax)}</span>
+      <div className="flex justify-between text-xs text-offwhite/40">
+        <span className={valueMin > min ? 'text-gold' : ''}>{fmt(valueMin)}</span>
+        <span className={valueMax < max ? 'text-gold' : ''}>{fmt(valueMax)}</span>
       </div>
 
       {/* Dual range slider */}
       <div ref={rangeRef} className="relative h-4 flex items-center">
-        {/* Track background */}
         <div className="absolute inset-x-0 h-px bg-offwhite/15" />
-        {/* Filled track */}
         <div
           className="absolute h-px bg-gold"
           style={{ left: `${pct(valueMin)}%`, right: `${100 - pct(valueMax)}%` }}
         />
-        {/* Min thumb */}
         <input
           type="range"
           min={min}
@@ -68,7 +87,6 @@ export default function PriceRangeFilter({ min, max, valueMin, valueMax, onChang
           onChange={handleMinChange}
           className="absolute w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gold [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-gold [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
         />
-        {/* Max thumb */}
         <input
           type="range"
           min={min}
@@ -80,23 +98,9 @@ export default function PriceRangeFilter({ min, max, valueMin, valueMax, onChang
         />
       </div>
 
-      {/* Preset buttons */}
-      <div className="space-y-2 pt-1">
-        {PRESETS.map((p) => {
-          const isActive = p === activePreset
-          const effectiveMax = p.max === Infinity ? max : p.max
-          return (
-            <button
-              key={p.label}
-              onClick={() => onChange(p.min, effectiveMax)}
-              className={`w-full text-left text-xs py-1.5 transition-colors ${
-                isActive ? 'text-gold' : 'text-offwhite/40 hover:text-offwhite/70'
-              }`}
-            >
-              {p.label}
-            </button>
-          )
-        })}
+      <div className="flex justify-between text-xs text-offwhite/25">
+        <span>mín</span>
+        <span>máx</span>
       </div>
     </div>
   )

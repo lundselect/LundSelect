@@ -187,7 +187,7 @@ interface Order {
 }
 
 const quickLinks = [
-  { label: 'Ajuda', icon: '💬', section: 'social', modal: null },
+  { label: 'Ajuda', icon: '💬', section: null, modal: null, href: '/ajuda' },
   { label: 'Trocar senha', icon: '🔑', section: 'dados', modal: null },
   { label: 'Avaliar site', icon: '★', section: null, modal: 'rate' },
   { label: 'Sugerir melhoria', icon: '💡', section: null, modal: 'feedback' },
@@ -737,7 +737,8 @@ export default function ContaPage() {
           <button
             key={link.label}
             onClick={() => {
-              if (link.modal) setModal(link.modal as 'rate' | 'feedback')
+              if ('href' in link && link.href) router.push(link.href)
+              else if (link.modal) setModal(link.modal as 'rate' | 'feedback')
               else if (link.section) setActiveSection(link.section)
             }}
             className="border border-gold/10 hover:border-gold/30 p-4 flex flex-col gap-2 transition-colors group text-left"

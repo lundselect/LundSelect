@@ -5,11 +5,25 @@ import { Brand, Product } from '@/types'
 import ProductCard from '@/components/ui/ProductCard'
 import PriceRangeFilter from '@/components/ui/PriceRangeFilter'
 
+const CLOTHING_SUBCATS = ['Blusas', 'Calças', 'Vestidos', 'Macacões', 'Beachwear', 'Resortwear']
+const ACCESSORIES_SUBCATS = ['Bolsas', 'Joias', 'Chapéus', 'Beachwear']
+
 interface Props {
   initialCategory?: string
   initialBrand?: string
   brands: Brand[]
   products: Product[]
+}
+
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      className={`w-3 h-3 transition-transform duration-200 flex-shrink-0 ${open ? 'rotate-180' : ''}`}
+      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  )
 }
 
 export default function ProductsClient({ initialCategory, initialBrand, brands, products }: Props) {
@@ -26,26 +40,29 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
   const [roupasOpen, setRoupasOpen] = useState(false)
   const [acessoriosOpen, setAcessoriosOpen] = useState(false)
 
-  const CLOTHING_SUBCATS = ['Blusas', 'Calças', 'Vestidos', 'Macacões', 'Beachwear', 'Resortwear']
-  const ACCESSORIES_SUBCATS = ['Bolsas', 'Joias', 'Chapéus', 'Beachwear']
-
   const filtered = useMemo(() => {
     return products.filter((p) => {
       const cat = selectedCategory?.toLowerCase()
-      if (cat === 'novidades' && !p.isNew) return false
-      if (cat === 'sale' && !p.onSale) return false
-      if (cat === 'roupas') {
-        const allClothing = CLOTHING_SUBCATS.map(s => s.toLowerCase())
-        if (!allClothing.includes(p.category.toLowerCase()) && p.category.toLowerCase() !== 'roupas') return false
+      if (!cat) {
+        // no filter
+      } else if (cat === 'novidades') {
+        if (!p.isNew) return false
+      } else if (cat === 'sale') {
+        if (!p.onSale) return false
+      } else if (cat === 'roupas') {
+        const all = [...CLOTHING_SUBCATS, 'Roupas'].map(s => s.toLowerCase())
+        if (!all.includes(p.category.toLowerCase())) return false
       } else if (cat === 'acessórios') {
-        const allAcc = ACCESSORIES_SUBCATS.map(s => s.toLowerCase())
-        if (!allAcc.includes(p.category.toLowerCase()) && p.category.toLowerCase() !== 'acessórios') return false
-      } else if (cat && cat !== 'novidades' && cat !== 'sale' && p.category.toLowerCase() !== cat) return false
+        const all = [...ACCESSORIES_SUBCATS, 'Acessórios'].map(s => s.toLowerCase())
+        if (!all.includes(p.category.toLowerCase())) return false
+      } else {
+        if (p.category.toLowerCase() !== cat) return false
+      }
       if (selectedBrand && p.brandSlug !== selectedBrand) return false
       if (p.price < priceMin || p.price > priceMax) return false
       return true
     })
-  }, [selectedCategory, selectedBrand, priceMin, priceMax, products, CLOTHING_SUBCATS])
+  }, [selectedCategory, selectedBrand, priceMin, priceMax, products])
 
   const hasFilters = selectedCategory || selectedBrand || priceMin > minPrice || priceMax < maxPrice
 
@@ -56,6 +73,9 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
     setPriceMax(maxPrice)
   }
 
+  const selectSub = (sub: string) => setSelectedCategory(selectedCategory === sub ? null : sub)
+  const isActive = (cat: string) => selectedCategory?.toLowerCase() === cat.toLowerCase()
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="mb-10">
@@ -63,7 +83,7 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
         <div className="flex items-center justify-between">
           <h1 className="text-offwhite text-3xl font-light tracking-wide">
             {selectedCategory
-              ? decodeURIComponent(selectedCategory).charAt(0).toUpperCase() + decodeURIComponent(selectedCategory).slice(1)
+              ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)
               : 'Produtos'}
           </h1>
           <div className="flex items-center gap-4">
@@ -82,10 +102,7 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
         <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-full lg:w-56 flex-shrink-0`}>
           <div className="sticky top-24 space-y-8">
             {hasFilters && (
-              <button
-                onClick={clearFilters}
-                className="text-gold/60 hover:text-gold text-xs tracking-widest uppercase transition-colors"
-              >
+              <button onClick={clearFilters} className="text-gold/60 hover:text-gold text-xs tracking-widest uppercase transition-colors">
                 Limpar filtros ×
               </button>
             )}
@@ -95,27 +112,24 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
               <h3 className="text-offwhite/40 text-xs tracking-[0.3em] uppercase mb-4">Categoria</h3>
               <ul className="space-y-3">
 
-                {/* Roupas with expandable subcategories */}
+                {/* Roupas */}
                 <li>
                   <button
                     onClick={() => setRoupasOpen(!roupasOpen)}
-                    className={`flex items-center gap-2 text-sm transition-colors w-full text-left ${roupasOpen || CLOTHING_SUBCATS.includes(selectedCategory ?? '') ? 'text-offwhite' : 'text-offwhite/50 hover:text-offwhite'}`}
+                    className={`flex items-center gap-2 text-sm w-full text-left transition-colors ${
+                      roupasOpen || CLOTHING_SUBCATS.includes(selectedCategory ?? '') ? 'text-offwhite' : 'text-offwhite/50 hover:text-offwhite'
+                    }`}
                   >
                     <span>Roupas</span>
-                    <svg
-                      className={`w-3 h-3 transition-transform duration-200 flex-shrink-0 ${roupasOpen ? 'rotate-180' : ''}`}
-                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <ChevronIcon open={roupasOpen} />
                   </button>
                   {roupasOpen && (
                     <ul className="mt-3 space-y-3">
                       {CLOTHING_SUBCATS.map((sub) => (
                         <li key={sub}>
                           <button
-                            onClick={() => setSelectedCategory(selectedCategory === sub ? null : sub)}
-                            className={`text-sm transition-colors pl-2 ${selectedCategory === sub ? 'text-gold' : 'text-offwhite/40 hover:text-offwhite'}`}
+                            onClick={() => selectSub(sub)}
+                            className={`text-sm pl-2 transition-colors ${selectedCategory === sub ? 'text-gold' : 'text-offwhite/40 hover:text-offwhite'}`}
                           >
                             {sub}
                           </button>
@@ -125,27 +139,24 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
                   )}
                 </li>
 
-                {/* Acessórios with expandable subcategories */}
+                {/* Acessórios */}
                 <li>
                   <button
                     onClick={() => setAcessoriosOpen(!acessoriosOpen)}
-                    className={`flex items-center gap-2 text-sm transition-colors w-full text-left ${acessoriosOpen || ACCESSORIES_SUBCATS.includes(selectedCategory ?? '') ? 'text-offwhite' : 'text-offwhite/50 hover:text-offwhite'}`}
+                    className={`flex items-center gap-2 text-sm w-full text-left transition-colors ${
+                      acessoriosOpen || ACCESSORIES_SUBCATS.includes(selectedCategory ?? '') ? 'text-offwhite' : 'text-offwhite/50 hover:text-offwhite'
+                    }`}
                   >
                     <span>Acessórios</span>
-                    <svg
-                      className={`w-3 h-3 transition-transform duration-200 flex-shrink-0 ${acessoriosOpen ? 'rotate-180' : ''}`}
-                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <ChevronIcon open={acessoriosOpen} />
                   </button>
                   {acessoriosOpen && (
                     <ul className="mt-3 space-y-3">
                       {ACCESSORIES_SUBCATS.map((sub) => (
                         <li key={sub}>
                           <button
-                            onClick={() => setSelectedCategory(selectedCategory === sub ? null : sub)}
-                            className={`text-sm transition-colors pl-2 ${selectedCategory === sub ? 'text-gold' : 'text-offwhite/40 hover:text-offwhite'}`}
+                            onClick={() => selectSub(sub)}
+                            className={`text-sm pl-2 transition-colors ${selectedCategory === sub ? 'text-gold' : 'text-offwhite/40 hover:text-offwhite'}`}
                           >
                             {sub}
                           </button>
@@ -159,8 +170,8 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
                 {['Novidades', 'Sale'].map((cat) => (
                   <li key={cat}>
                     <button
-                      onClick={() => setSelectedCategory(selectedCategory?.toLowerCase() === cat.toLowerCase() ? null : cat)}
-                      className={`text-sm transition-colors ${selectedCategory?.toLowerCase() === cat.toLowerCase() ? 'text-gold' : 'text-offwhite/50 hover:text-offwhite'}`}
+                      onClick={() => setSelectedCategory(isActive(cat) ? null : cat)}
+                      className={`text-sm transition-colors ${isActive(cat) ? 'text-gold' : 'text-offwhite/50 hover:text-offwhite'}`}
                     >
                       {cat}
                     </button>
@@ -204,10 +215,7 @@ export default function ProductsClient({ initialCategory, initialBrand, brands, 
           {filtered.length === 0 ? (
             <div className="text-center py-24 space-y-4">
               <p className="text-offwhite/30 text-sm">Nenhuma peça encontrada com esses filtros.</p>
-              <button
-                onClick={clearFilters}
-                className="text-gold text-xs tracking-widest uppercase border border-gold/30 px-6 py-2 hover:border-gold transition-colors"
-              >
+              <button onClick={clearFilters} className="text-gold text-xs tracking-widest uppercase border border-gold/30 px-6 py-2 hover:border-gold transition-colors">
                 Ver todos os produtos
               </button>
             </div>

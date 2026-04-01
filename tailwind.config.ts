@@ -11,7 +11,7 @@ const config: Config = {
       colors: {
         primary: '#faf8f5',
         gold: '#8a6a2e',
-        offwhite: '#1a1a1a',
+        offwhite: '#0a0a0a',
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

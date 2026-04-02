@@ -176,6 +176,9 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="text-gold text-sm font-medium">
           R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </p>
+        {product.installments && (
+          <p className="text-offwhite/40 text-xs mt-0.5">{product.installments}</p>
+        )}
       </div>
     </Link>
   )

@@ -22,6 +22,7 @@ export interface Product {
   inStock?: boolean
   description?: string
   onSale?: boolean
+  installments?: string
 }
 
 export interface User {

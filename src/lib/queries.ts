@@ -59,6 +59,7 @@ export async function getProducts(filters?: ProductFilters): Promise<Product[]> 
     inStock: p.in_stock ?? true,
     description: p.description ?? undefined,
     onSale: p.on_sale ?? false,
+    installments: p.installments ?? undefined,
   }))
 }
 
@@ -87,6 +88,7 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
     inStock: data.in_stock ?? true,
     description: data.description ?? undefined,
     onSale: data.on_sale ?? false,
+    installments: data.installments ?? undefined,
   }
 }
 

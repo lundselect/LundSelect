@@ -44,6 +44,14 @@ export const brands: Brand[] = [
     slug: 'sol-brand',
     description: 'De Belo Horizonte, Sol Brand cria vestidos, biquínis e moda praia com identidade própria e sofisticação. Com mais de 220 produtos em coleção, a marca combina cortes modernos e tecidos de qualidade para a mulher que brilha onde vai.',
   },
+  {
+    id: '6',
+    name: 'New Match',
+    state: 'SP',
+    category: 'Roupas',
+    slug: 'new-match',
+    description: 'New Match é uma marca paulistana contemporânea que une estilo urbano e sofisticação. Com coleções que transitam do dia a dia ao ocasional, cada peça é pensada para a mulher que quer se sentir poderosa sem abrir mão do conforto.',
+  },
 ]
 
 export const products: Product[] = [

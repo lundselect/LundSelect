@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const SLIDES = [
-  'https://newmatch.com.br/media/wysiwyg/home-new-macth/2026/marco/11/BANNER_PRINCIPAL_DESKTOP_18_.jpg',
   'https://newmatch.com.br/media/wysiwyg/home-new-macth/2026/marco/11/BANNER_PRINCIPAL_DESKTOP_6_.jpg',
+  'https://newmatch.com.br/media/wysiwyg/home-new-macth/2026/marco/11/BANNER_PRINCIPAL_DESKTOP_18_.jpg',
 ]
 
 export default function NewMatchHero() {

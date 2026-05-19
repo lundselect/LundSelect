@@ -22,7 +22,7 @@ export default function LoginPage() {
   const handleEmailContinue = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setStep('register')
+    setStep('login')
   }
 
   const handleLogin = async (e: React.FormEvent) => {

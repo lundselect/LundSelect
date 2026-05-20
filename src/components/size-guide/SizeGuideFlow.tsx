@@ -7,15 +7,17 @@ import { computeTrueSize } from '@/lib/size-guide/trueSize'
 import { saveGuestProfile, saveUserProfile, CONSENT_VERSION } from '@/lib/size-guide/storage'
 import StepProgress from './StepProgress'
 import Step1Measurements from './Step1Measurements'
+import Step2BodyScan from './Step2BodyScan'
 import Step3Questionnaire from './Step3Questionnaire'
 import FlowCompletion from './FlowCompletion'
 
-type Step = 'measurements' | 'questionnaire' | 'done'
+type Step = 'measurements' | 'scan' | 'questionnaire' | 'done'
 
 interface FlowState {
   measurements?: Partial<Measurements>
   shapeAnswers?: Partial<ShapeAnswers>
   fitPreferences?: Partial<FitPreferences>
+  scanSizeHint?: string
 }
 
 function computeConfidence(state: FlowState) {
@@ -45,6 +47,15 @@ export default function SizeGuideFlow() {
 
   const handleMeasurementsDone = (measurements: Partial<Measurements>) => {
     setState(s => ({ ...s, measurements }))
+    setStep('scan')
+  }
+
+  const handleScanDone = (
+    shapeAnswers: Partial<ShapeAnswers>,
+    fitPreferences: Partial<FitPreferences>,
+    sizeHint?: string
+  ) => {
+    setState(s => ({ ...s, shapeAnswers, fitPreferences, scanSizeHint: sizeHint }))
     setStep('questionnaire')
   }
 
@@ -101,7 +112,7 @@ export default function SizeGuideFlow() {
     setStep('done')
   }
 
-  const currentStepNum = step === 'measurements' ? 1 : step === 'questionnaire' ? 2 : 2
+  const currentStepNum = step === 'measurements' ? 1 : step === 'scan' ? 2 : 3
 
   if (step === 'done' && savedProfile) {
     return (
@@ -121,7 +132,8 @@ export default function SizeGuideFlow() {
       <StepProgress
         currentStep={currentStepNum}
         onSkip={() => {
-          if (step === 'measurements') setStep('questionnaire')
+          if (step === 'measurements') setStep('scan')
+          else if (step === 'scan') setStep('questionnaire')
           else save(state)
         }}
       />
@@ -136,6 +148,13 @@ export default function SizeGuideFlow() {
         <Step1Measurements
           initial={state.measurements}
           onComplete={handleMeasurementsDone}
+          onSkip={() => setStep('scan')}
+        />
+      )}
+
+      {!saving && step === 'scan' && (
+        <Step2BodyScan
+          onComplete={handleScanDone}
           onSkip={() => setStep('questionnaire')}
         />
       )}

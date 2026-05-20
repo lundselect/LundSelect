@@ -1,4 +1,4 @@
-const STEPS = ['Medidas', 'Questionário']
+const STEPS = ['Medidas', 'Scan', 'Questionário']
 
 interface Props {
   currentStep: number // 1 or 2

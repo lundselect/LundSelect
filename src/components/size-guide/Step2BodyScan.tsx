@@ -300,7 +300,6 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
           ref={hiddenImgRef}
           src={previewUrl}
           alt=""
-          crossOrigin="anonymous"
           className="hidden"
         />
       )}

@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { FavoriteList } from '@/types'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './AuthContext'
+import { useToast } from './ToastContext'
 
 interface FavoritesContextType {
   favoriteIds: string[]
@@ -22,6 +23,7 @@ const FavoritesContext = createContext<FavoritesContextType | null>(null)
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
+  const { showToast } = useToast()
   const [favoriteIds, setFavoriteIds] = useState<string[]>([])
   const [lists, setLists] = useState<FavoriteList[]>([])
   const [favoriteBrands, setFavoriteBrands] = useState<string[]>([])
@@ -66,6 +68,11 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       ? favoriteIds.filter((id) => id !== productId)
       : [...favoriteIds, productId]
     setFavoriteIds(next)
+    showToast(
+      isCurrentlyFav ? 'Removido dos favoritos' : 'Adicionado aos favoritos',
+      'success',
+      isCurrentlyFav ? '♡' : '♥'
+    )
 
     if (user) {
       if (isCurrentlyFav) {

@@ -1,10 +1,12 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { brands } from '@/lib/data'
 
 export const metadata: Metadata = {
-  title: 'Para marcas — Lund Select',
-  description: 'Faça parte da Lund Select. Saiba como ter sua marca na nossa vitrine.',
+  title: 'Marcas Parceiras — Lund Select',
+  description: 'Conheça as marcas parceiras da Lund Select e saiba como fazer parte da nossa vitrine curada.',
+  alternates: { canonical: 'https://lundselect.com.br/marcas-parceiras' },
 }
 
 export default function MarcasParceirasPage() {
@@ -43,9 +45,14 @@ export default function MarcasParceirasPage() {
           {brands.map((brand) => (
             <Link key={brand.id} href={`/marcas/${brand.slug}`} className="border border-gold/10 hover:border-gold/30 transition-colors group flex items-center justify-center h-28 px-6">
               {brand.logo ? (
-                <div style={{width: '160px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={brand.logo} alt={brand.name} style={{maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', mixBlendMode: 'multiply'}} />
+                <div className="relative w-40 h-16 flex items-center justify-center">
+                  <Image
+                    src={brand.logo}
+                    alt={brand.name}
+                    fill
+                    className="object-contain mix-blend-multiply"
+                    sizes="160px"
+                  />
                 </div>
               ) : (
                 <div className="text-center">

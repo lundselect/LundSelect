@@ -1,24 +1,39 @@
 {
   "name": "Lund Select",
-  "short_name": "Lund",
-  "description": "Brasil inteiro. Uma só vitrine.",
+  "short_name": "Lund Select",
+  "description": "Brasil inteiro. Uma só vitrine. As melhores marcas de moda feminina brasileira em um só lugar.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#faf8f5",
-  "theme_color": "#1a1a1a",
+  "theme_color": "#faf8f5",
+  "lang": "pt-BR",
   "orientation": "portrait",
+  "categories": ["shopping", "lifestyle"],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

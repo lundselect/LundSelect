@@ -1,58 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { rateLimit } from '@/lib/rateLimit'
+import { optionalString, requireArray, ValidationError } from '@/lib/validate'
+
+const VALID_AGES = ['18-24', '25-34', '35-44', '45-54', '55+']
+const VALID_FREQUENCIES = ['Semanalmente', 'Mensalmente', 'A cada 2-3 meses', 'Raramente']
+const VALID_BUDGETS = ['Até R$150', 'R$150–R$300', 'R$300–R$500', 'Acima de R$500']
 
 export async function POST(req: NextRequest) {
-  const data = await req.json()
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  const { ok, retryAfterMs } = rateLimit(`pesquisa:${ip}`, 2, 3_600_000) // 2 per hour per IP
+  if (!ok) {
+    return NextResponse.json(
+      { error: 'Você já respondeu a pesquisa recentemente.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(retryAfterMs / 1000)) } }
+    )
+  }
 
-  // Save to Supabase
-  const { error: dbError } = await supabase.from('survey_responses').insert({
-    location: data.location,
-    age: data.age,
-    gender: data.gender,
-    frequency: data.frequency,
-    brand_count: data.brandCount,
-    channels: data.channels ?? [],
-    abandoned: data.abandoned,
-    abandon_reasons: data.abandonReasons ?? [],
-    instagram_rating: data.instagramRating,
-    shipping: data.shipping,
-    outfit_ease: data.outfitEase,
-    categories: data.categories ?? [],
-    budget: data.budget,
-    interest: data.interest,
-    platform_features: data.platformFeatures ?? [],
-    favorite_brands: data.favoriteBrands,
-    newsletter: data.newsletter,
-    email: data.email ?? null,
-  })
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Corpo da requisição inválido' }, { status: 400 })
+  }
 
-  if (dbError) console.error('Supabase insert error:', dbError)
+  let data: Record<string, unknown>
+  try {
+    data = body as Record<string, unknown>
+    // Validate enumerable fields
+    if (data.age && !VALID_AGES.includes(String(data.age))) throw new ValidationError('Faixa etária inválida')
+    if (data.frequency && !VALID_FREQUENCIES.includes(String(data.frequency))) throw new ValidationError('Frequência inválida')
+    if (data.budget && !VALID_BUDGETS.includes(String(data.budget))) throw new ValidationError('Orçamento inválido')
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      return NextResponse.json({ error: err.message }, { status: 400 })
+    }
+    return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
+  }
 
-  // Also send email notification
+  const safe = {
+    location: optionalString(data.location, 100),
+    age: optionalString(data.age, 20),
+    gender: optionalString(data.gender, 50),
+    frequency: optionalString(data.frequency, 50),
+    brand_count: optionalString(data.brandCount, 20),
+    channels: requireArray(data.channels, 'Canais'),
+    abandoned: optionalString(data.abandoned, 5),
+    abandon_reasons: requireArray(data.abandonReasons, 'Motivos'),
+    instagram_rating: typeof data.instagramRating === 'number' ? Math.min(5, Math.max(1, Math.round(data.instagramRating))) : null,
+    shipping: optionalString(data.shipping, 50),
+    outfit_ease: optionalString(data.outfitEase, 50),
+    categories: requireArray(data.categories, 'Categorias'),
+    budget: optionalString(data.budget, 50),
+    interest: optionalString(data.interest, 5),
+    platform_features: requireArray(data.platformFeatures, 'Funcionalidades'),
+    favorite_brands: optionalString(data.favoriteBrands, 500),
+    newsletter: optionalString(data.newsletter, 5),
+    email: data.email ? optionalString(data.email, 254) : null,
+  }
+
+  const { error: dbError } = await supabase.from('survey_responses').insert(safe)
+  if (dbError) console.error('Supabase insert error (pesquisa):', dbError)
+
+  // Email notification — fire and forget, don't block the response
   const lines = [
-    `Pesquisa de cliente — Lund Select`,
-    `─────────────────────────────────`,
-    ``,
-    `1. Onde você mora? ${data.location}`,
-    `2. Faixa etária: ${data.age}`,
-    `3. Como você se identifica? ${data.gender}`,
-    `4. Com que frequência você compra moda? ${data.frequency}`,
-    `5. Quantas marcas comprou nos últimos 6 meses? ${data.brandCount}`,
-    `6. Onde você costuma descobrir e comprar marcas novas? ${(data.channels ?? []).join(', ')}`,
-    `7. Já abandonou uma compra por experiência ruim? ${data.abandoned}`,
-    `8. Motivos para abandono: ${(data.abandonReasons ?? []).join(', ')}`,
-    `9. Conveniência de comprar pelo Instagram (1–5): ${data.instagramRating}`,
-    `10. Importância do frete rápido: ${data.shipping}`,
-    `11. Facilidade de montar looks completos: ${data.outfitEase}`,
-    `12. Categorias que mais compra: ${(data.categories ?? []).join(', ')}`,
-    `13. Gasto típico por peça: ${data.budget}`,
-    `14. Usaria uma plataforma multi-marcas curada como a Lund Select? ${data.interest}`,
-    `15. O que mais importa em uma plataforma assim? ${(data.platformFeatures ?? []).join(', ')}`,
-    `16. Marcas brasileiras favoritas: ${data.favoriteBrands}`,
-    `17. Quer receber novidades da Lund Select? ${data.newsletter} ${data.email ? `— ${data.email}` : ''}`,
+    'Pesquisa de cliente — Lund Select',
+    '─────────────────────────────────',
+    '',
+    `1. Onde você mora? ${safe.location ?? '—'}`,
+    `2. Faixa etária: ${safe.age ?? '—'}`,
+    `3. Gênero: ${safe.gender ?? '—'}`,
+    `4. Frequência de compra: ${safe.frequency ?? '—'}`,
+    `5. Marcas nos últimos 6 meses: ${safe.brand_count ?? '—'}`,
+    `6. Canais: ${safe.channels.join(', ')}`,
+    `7. Abandonou compra? ${safe.abandoned ?? '—'}`,
+    `8. Motivos: ${safe.abandon_reasons.join(', ')}`,
+    `9. Instagram (1–5): ${safe.instagram_rating ?? '—'}`,
+    `10. Frete: ${safe.shipping ?? '—'}`,
+    `11. Outfit ease: ${safe.outfit_ease ?? '—'}`,
+    `12. Categorias: ${safe.categories.join(', ')}`,
+    `13. Orçamento: ${safe.budget ?? '—'}`,
+    `14. Interesse: ${safe.interest ?? '—'}`,
+    `15. Funcionalidades: ${safe.platform_features.join(', ')}`,
+    `16. Marcas favoritas: ${safe.favorite_brands ?? '—'}`,
+    `17. Newsletter: ${safe.newsletter ?? '—'} ${safe.email ? `— ${safe.email}` : ''}`,
   ].join('\n')
 
-  await fetch('https://api.resend.com/emails', {
+  fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -61,10 +95,10 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       from: 'Lund Select <onboarding@resend.dev>',
       to: ['lundselect@gmail.com'],
-      subject: `[Pesquisa] Nova resposta`,
+      subject: '[Pesquisa] Nova resposta',
       text: lines,
     }),
-  })
+  }).catch((err) => console.error('Resend error (pesquisa):', err))
 
   return NextResponse.json({ ok: true })
 }

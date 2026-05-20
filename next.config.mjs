@@ -19,6 +19,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'newmatch.com.br',
       },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
     ],
   },
 }

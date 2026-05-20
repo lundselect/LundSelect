@@ -5,6 +5,7 @@ import { getBrands, getProducts } from '@/lib/queries'
 export const metadata: Metadata = {
   title: 'Novidades — Lund Select',
   description: 'Descubra as últimas novidades da Lund Select.',
+  alternates: { canonical: 'https://lundselect.com.br/novidades' },
 }
 
 export default async function NovidadesPage() {

@@ -3,9 +3,10 @@ import { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Frete & Trocas — Lund Select',
   description: 'Informações sobre frete, entrega, trocas e devoluções na Lund Select.',
+  alternates: { canonical: 'https://lundselect.com.br/frete-trocas' },
 }
 
-const sections = [
+const sections: { title: string; items: React.ReactNode[] }[] = [
   {
     title: 'Frete',
     items: [
@@ -21,7 +22,7 @@ const sections = [
       'Trocas aceitas em até 30 dias após o recebimento',
       'O produto deve estar sem uso, com etiquetas originais e na embalagem original',
       'Custos de envio para troca são por conta da cliente (primeira troca gratuita)',
-      'Solicite a troca pelo e-mail atendimento@lundselect.com.br',
+      <>Solicite a troca pelo e-mail <a href="mailto:oi@lundselect.com.br" className="text-gold hover:text-gold/70 transition-colors">oi@lundselect.com.br</a></>,
     ],
   },
   {
@@ -53,6 +54,13 @@ export default function FreteTrocasPage() {
             </ul>
           </div>
         ))}
+      </div>
+
+      <div className="mt-16 border border-gold/10 p-6">
+        <p className="text-offwhite/40 text-sm mb-2">Dúvidas sobre frete ou troca?</p>
+        <a href="/ajuda" className="text-gold text-xs tracking-widest uppercase hover:text-gold/70 transition-colors">
+          Acessar Central de Ajuda →
+        </a>
       </div>
     </div>
   )

@@ -18,11 +18,14 @@ export interface Product {
   sizes: string[]
   slug: string
   image?: string
+  images?: string[]
   isNew?: boolean
   inStock?: boolean
   description?: string
   onSale?: boolean
   installments?: string
+  createdAt?: string
+  stockBySize?: Record<string, number>
 }
 
 export interface User {

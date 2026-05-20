@@ -17,3 +17,27 @@
     text-wrap: balance;
   }
 }
+
+/* Skip to content — hidden until focused via keyboard */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: #8a6a2e;
+  color: #faf8f5;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: top 0.1s;
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Visible focus ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid #8a6a2e;
+  outline-offset: 2px;
+}

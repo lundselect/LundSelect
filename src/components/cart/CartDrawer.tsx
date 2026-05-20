@@ -1,6 +1,39 @@
 'use client'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useCart } from '@/contexts/CartContext'
+
+const FREE_SHIPPING_THRESHOLD = 300
+
+function FreeShippingBar({ total }: { total: number }) {
+  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - total)
+  const pct = Math.min(100, (total / FREE_SHIPPING_THRESHOLD) * 100)
+  const unlocked = total >= FREE_SHIPPING_THRESHOLD
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-center">
+        {unlocked ? (
+          <span className="text-gold tracking-wide">Frete grátis desbloqueado!</span>
+        ) : (
+          <span className="text-offwhite/40">
+            Falta{' '}
+            <span className="text-offwhite/70">
+              R$ {remaining.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </span>{' '}
+            para frete grátis
+          </span>
+        )}
+      </p>
+      <div className="h-px w-full bg-gold/10 relative overflow-hidden">
+        <div
+          className="absolute left-0 top-0 h-full bg-gold transition-all duration-500"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  )
+}
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQty, totalItems, totalPrice } = useCart()
@@ -43,8 +76,20 @@ export default function CartDrawer() {
             <ul className="divide-y divide-gold/10">
               {items.map((item) => (
                 <li key={`${item.product.id}-${item.size}`} className="py-4 flex gap-4">
-                  <div className="w-16 h-20 bg-offwhite/5 border border-gold/10 flex-shrink-0 flex items-center justify-center">
-                    <span className="text-gold/20 text-[8px] uppercase">{item.product.brand}</span>
+                  <div className="w-16 h-20 bg-offwhite/5 border border-gold/10 flex-shrink-0 relative overflow-hidden">
+                    {item.product.image ? (
+                      <Image
+                        src={item.product.image}
+                        alt={item.product.name}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-gold/20 text-[8px] uppercase">{item.product.brand}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-offwhite/40 text-[10px] tracking-widest uppercase">{item.product.brand}</p>
@@ -75,16 +120,22 @@ export default function CartDrawer() {
         {/* Footer */}
         {items.length > 0 && (
           <div className="px-6 py-5 border-t border-gold/10 space-y-4">
+            {/* Free shipping progress */}
+            <FreeShippingBar total={totalPrice} />
+
             <div className="flex justify-between items-center">
               <span className="text-offwhite/50 text-sm">Total</span>
               <span className="text-offwhite text-lg font-medium">
                 R$ {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
-            <p className="text-offwhite/30 text-xs text-center">Frete calculado no checkout</p>
-            <button className="w-full bg-gold text-primary py-4 text-xs tracking-[0.2em] uppercase hover:bg-gold/90 transition-colors">
+            <Link
+              href="/checkout"
+              onClick={closeCart}
+              className="block w-full bg-gold text-primary py-4 text-xs tracking-[0.2em] uppercase hover:bg-gold/90 transition-colors text-center"
+            >
               Finalizar compra
-            </button>
+            </Link>
           </div>
         )}
       </div>

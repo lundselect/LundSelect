@@ -25,10 +25,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
 
-  // Load cart when user changes
+  // Load cart when user changes — merges guest cart into Supabase on login
   useEffect(() => {
     if (user) {
-      loadFromSupabase(user.id)
+      mergeAndLoad(user.id)
     } else {
       const stored = localStorage.getItem('lund_cart')
       setItems(stored ? JSON.parse(stored) : [])
@@ -36,18 +36,51 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
-  async function loadFromSupabase(userId: string) {
+  async function mergeAndLoad(userId: string) {
+    // Read guest cart before clearing it
+    const guestItems: CartItem[] = (() => {
+      try {
+        const stored = localStorage.getItem('lund_cart')
+        return stored ? JSON.parse(stored) : []
+      } catch { return [] }
+    })()
+
+    // Load existing Supabase cart
     const { data } = await supabase
       .from('cart_items')
       .select('*')
       .eq('user_id', userId)
-    if (!data) return
-    const cartItems: CartItem[] = data.flatMap((row) => {
+
+    const supabaseItems: CartItem[] = (data || []).flatMap((row) => {
       const product = allProducts.find((p) => p.id === row.product_id)
       if (!product) return []
       return [{ product, size: row.size, quantity: row.quantity }]
     })
-    setItems(cartItems)
+
+    // Merge: Supabase wins on conflicts, guest-only items are added
+    const merged = [...supabaseItems]
+    const upsertPayloads: { user_id: string; product_id: string; size: string; quantity: number }[] = []
+
+    for (const guestItem of guestItems) {
+      const exists = merged.find(
+        (i) => i.product.id === guestItem.product.id && i.size === guestItem.size
+      )
+      if (!exists) {
+        merged.push(guestItem)
+        upsertPayloads.push({
+          user_id: userId,
+          product_id: guestItem.product.id,
+          size: guestItem.size,
+          quantity: guestItem.quantity,
+        })
+      }
+    }
+
+    if (upsertPayloads.length > 0) {
+      await supabase.from('cart_items').upsert(upsertPayloads)
+    }
+    localStorage.removeItem('lund_cart')
+    setItems(merged)
   }
 
   function saveLocal(next: CartItem[]) {

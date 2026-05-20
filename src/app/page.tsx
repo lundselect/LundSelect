@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { getBrands, getProducts } from '@/lib/queries'
 import ProductCard from '@/components/ui/ProductCard'
 import BrandCard from '@/components/ui/BrandCard'
+import NewsletterForm from '@/components/ui/NewsletterForm'
+import RecentlyViewedSection from '@/components/ui/RecentlyViewedSection'
 
 export default async function HomePage() {
   const [brands, products] = await Promise.all([getBrands(), getProducts()])
@@ -27,7 +29,7 @@ export default async function HomePage() {
               Explorar
             </Link>
             <Link
-              href="/produtos?categoria=novidades"
+              href="/novidades"
               className="inline-block border border-offwhite/20 text-offwhite/60 hover:border-offwhite/50 hover:text-offwhite px-10 py-3.5 text-xs tracking-[0.2em] uppercase transition-all duration-300"
             >
               Novidades
@@ -47,7 +49,7 @@ export default async function HomePage() {
             <p className="text-gold/60 text-xs tracking-[0.3em] uppercase mb-2">Curadoria</p>
             <h2 className="text-offwhite text-2xl font-light tracking-wide">Marcas em Destaque</h2>
           </div>
-          <Link href="/produtos?view=marcas" className="text-offwhite/40 hover:text-gold text-xs tracking-widest uppercase transition-colors hidden sm:block">
+          <Link href="/marcas-parceiras" className="text-offwhite/40 hover:text-gold text-xs tracking-widest uppercase transition-colors hidden sm:block">
             Ver todas →
           </Link>
         </div>
@@ -83,15 +85,50 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Quiz CTA */}
+      <section className="border-t border-gold/10 py-20 px-4 text-center bg-[radial-gradient(ellipse_at_center,_rgba(181,150,90,0.07)_0%,_transparent_70%)]">
+        <p className="text-gold/60 text-xs tracking-[0.4em] uppercase mb-6">Exclusivo Lund Select</p>
+        <h2 className="text-offwhite text-3xl sm:text-4xl font-light tracking-wide mb-4 max-w-xl mx-auto">
+          Descubra seu estilo pessoal
+        </h2>
+        <p className="text-offwhite/40 text-sm leading-relaxed max-w-sm mx-auto mb-10">
+          Responda 4 perguntas e receba uma curadoria personalizada das nossas marcas favoritas, feita especialmente para você.
+        </p>
+        <Link
+          href="/quiz"
+          className="inline-block bg-gold text-primary hover:bg-gold/90 px-12 py-4 text-xs tracking-[0.2em] uppercase transition-all duration-300"
+        >
+          Fazer o quiz ✦
+        </Link>
+      </section>
+
       {/* Banner */}
       <section className="border-t border-b border-gold/10 py-20 px-4 text-center my-12">
         <p className="text-gold/40 text-xs tracking-[0.5em] uppercase mb-6">Para marcas brasileiras</p>
         <h2 className="text-offwhite text-3xl sm:text-4xl font-light tracking-wide mb-6 max-w-xl mx-auto">
           Sua marca merece uma vitrine à altura
         </h2>
-        <Link href="#" className="inline-block border border-gold/40 text-gold/80 hover:border-gold hover:text-gold px-10 py-3.5 text-xs tracking-[0.2em] uppercase transition-all duration-300">
+        <Link href="/marcas-parceiras" className="inline-block border border-gold/40 text-gold/80 hover:border-gold hover:text-gold px-10 py-3.5 text-xs tracking-[0.2em] uppercase transition-all duration-300">
           Quero ser parceira
         </Link>
+      </section>
+
+      {/* Recently Viewed */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <RecentlyViewedSection />
+      </section>
+
+      {/* Newsletter */}
+      <section className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <p className="text-gold/60 text-xs tracking-[0.4em] uppercase mb-4">Fique por dentro</p>
+        <h2 className="text-offwhite text-2xl sm:text-3xl font-light tracking-wide mb-3">
+          Novidades em primeira mão
+        </h2>
+        <p className="text-offwhite/40 text-sm leading-relaxed mb-8">
+          Receba lançamentos, curadoria exclusiva e promoções diretamente no seu e-mail.
+        </p>
+        <NewsletterForm />
+        <p className="text-offwhite/20 text-xs mt-4">Sem spam. Cancele quando quiser.</p>
       </section>
     </>
   )

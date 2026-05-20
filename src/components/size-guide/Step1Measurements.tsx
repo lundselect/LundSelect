@@ -42,7 +42,7 @@ export default function Step1Measurements({ initial, onComplete, onSkip }: Props
       const raw = values[key]
       if (raw && raw.trim()) {
         const n = parseFloat(raw)
-        if (!isNaN(n) && n > 0) (measurements as any)[key] = n
+        if (!isNaN(n) && n > 0) (measurements as Record<string, number>)[key] = n
       }
     })
     onComplete(measurements)

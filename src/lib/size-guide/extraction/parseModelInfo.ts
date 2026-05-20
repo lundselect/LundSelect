@@ -1,4 +1,4 @@
-import { ModelInfo } from '../types'
+import { BrazilianLetterSize, ModelInfo } from '../types'
 
 // Matches: "modelo veste P, tem 1.74m" | "modelo: 38, 1.70m" | "1.74m e veste P"
 const PATTERNS = [
@@ -22,7 +22,7 @@ export function parseModelInfo(text: string): ModelInfo | undefined {
       if (height_cm >= 150 && height_cm <= 200) {
         return {
           height_cm,
-          sizeWorn: isNaN(numericSize) ? (sizeStr.toUpperCase() as any) : numericSize,
+          sizeWorn: isNaN(numericSize) ? (sizeStr.toUpperCase() as BrazilianLetterSize) : numericSize,
         }
       }
     }

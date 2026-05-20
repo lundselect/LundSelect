@@ -27,7 +27,7 @@ function OptionRow<T extends string>({
   label: string
   options: { value: T; label: string }[]
   value?: T
-  onChange: (v: T) => void
+  onChange: (v: T | undefined) => void
 }) {
   return (
     <div className="space-y-2">
@@ -49,7 +49,7 @@ function OptionRow<T extends string>({
         ))}
         <button
           type="button"
-          onClick={() => onChange(undefined as any)}
+          onClick={() => onChange(undefined)}
           className={`px-3 py-1.5 text-xs border transition-colors ${
             !value
               ? 'border-gold/40 text-offwhite/40'
@@ -173,7 +173,7 @@ export default function Step3Questionnaire({ initialAnswers, initialPrefs, onCom
                   const next = checked
                     ? issues.filter(i => i !== value)
                     : [...issues.filter(i => i !== 'none'), value]
-                  set('fitIssues', next.length ? next as any : undefined)
+                  set('fitIssues', next.length ? (next as ShapeAnswers['fitIssues']) : undefined)
                 }}
                 className={`w-full text-left flex items-center gap-3 px-3 py-2 border text-sm transition-colors ${
                   checked

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { FitPreferences, Measurements, ShapeAnswers, SizeProfile } from '@/lib/size-guide/types'
 import { computeTrueSize } from '@/lib/size-guide/trueSize'
@@ -39,7 +38,6 @@ function computeConfidence(state: FlowState) {
 
 export default function SizeGuideFlow() {
   const { user } = useAuth()
-  const router = useRouter()
   const [step, setStep] = useState<Step>('measurements')
   const [state, setState] = useState<FlowState>({})
   const [savedProfile, setSavedProfile] = useState<SizeProfile | null>(null)

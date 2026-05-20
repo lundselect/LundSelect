@@ -201,12 +201,15 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
   const [status,     setStatus]         = useState<Status>('idle')
   const [result,     setResult]         = useState<AnalysisResult | null>(null)
   const [errorMsg,   setErrorMsg]       = useState('')
+  const [consented,  setConsented]      = useState(false)
 
   const heightCm = parseInt(heightInput)
   const heightValid = !isNaN(heightCm) && heightCm >= 140 && heightCm <= 220
 
   // ── File select ──────────────────────────────────────────────────────────
   const handleFile = (file: File) => {
+    // Revoke any previous blob URL to free memory immediately
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
     const url = URL.createObjectURL(file)
     setPreviewUrl(url)
     setStatus('preview')
@@ -245,6 +248,12 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
     } catch {
       setErrorMsg('Erro ao processar a imagem. Tente novamente.')
       setStatus('error')
+    } finally {
+      // Revoke blob URL — photo is no longer needed after analysis
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+        setPreviewUrl(null)
+      }
     }
   }
 
@@ -268,6 +277,7 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
   }
 
   const reset = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewUrl(null)
     setResult(null)
     setStatus('idle')
@@ -318,6 +328,68 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
         )}
       </div>
 
+      {/* ── Privacy notice (idle only) ── */}
+      {status === 'idle' && (
+        <>
+          {/* Clothing & nudity guidance */}
+          <div className="border border-amber-500/20 bg-amber-500/5 p-4 mb-4">
+            <p className="text-amber-400/80 text-xs font-medium tracking-wide uppercase mb-2">
+              Antes de tirar a foto
+            </p>
+            <ul className="space-y-1.5">
+              {[
+                'Use roupas justas — leggings, top, roupa de ginástica ou similar',
+                'Roupas volumosas (casacos, vestidos largos) reduzem a precisão',
+                'Nudez não é permitida nem necessária para a análise',
+              ].map(item => (
+                <li key={item} className="flex items-start gap-2">
+                  <span className="text-amber-400/50 text-xs mt-0.5 flex-shrink-0">•</span>
+                  <p className="text-amber-100/50 text-xs leading-relaxed">{item}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Privacy guarantee */}
+          <div className="border border-gold/10 bg-gold/5 p-4 mb-4">
+            <p className="text-gold/70 text-xs font-medium tracking-wide uppercase mb-2">
+              Sua privacidade
+            </p>
+            <ul className="space-y-1.5">
+              {[
+                'A análise acontece inteiramente no seu dispositivo',
+                'Nenhuma imagem é enviada para nossos servidores',
+                'A foto é apagada da memória automaticamente após a análise',
+              ].map(item => (
+                <li key={item} className="flex items-start gap-2">
+                  <span className="text-gold/40 text-xs mt-0.5 flex-shrink-0">—</span>
+                  <p className="text-offwhite/40 text-xs leading-relaxed">{item}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Consent checkbox */}
+          <label className="flex items-start gap-3 cursor-pointer mb-5 group">
+            <div
+              onClick={() => setConsented(v => !v)}
+              className={`mt-0.5 w-4 h-4 flex-shrink-0 border flex items-center justify-center transition-colors ${
+                consented ? 'border-gold bg-gold' : 'border-gold/30 group-hover:border-gold/50'
+              }`}
+            >
+              {consented && <span className="text-primary text-xs leading-none">✓</span>}
+            </div>
+            <span
+              onClick={() => setConsented(v => !v)}
+              className="text-offwhite/40 text-xs leading-relaxed"
+            >
+              Estou ciente de que a foto é processada localmente, não é armazenada, e que devo usar roupas
+              adequadas sem nudez.
+            </span>
+          </label>
+        </>
+      )}
+
       {/* ── Tips (idle / preview) ── */}
       {(status === 'idle' || status === 'preview') && (
         <div className="border border-gold/10 p-4 mb-5 space-y-1.5">
@@ -350,7 +422,7 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
         <div className="space-y-3">
           <button
             type="button"
-            disabled={!heightValid}
+            disabled={!heightValid || !consented}
             onClick={() => {
               if (fileInputRef.current) {
                 fileInputRef.current.setAttribute('capture', 'user')
@@ -363,7 +435,7 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
           </button>
           <button
             type="button"
-            disabled={!heightValid}
+            disabled={!heightValid || !consented}
             onClick={() => {
               if (fileInputRef.current) {
                 fileInputRef.current.removeAttribute('capture')
@@ -374,9 +446,9 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
           >
             Escolher da galeria
           </button>
-          {!heightValid && (
+          {(!heightValid || !consented) && (
             <p className="text-offwhite/25 text-xs text-center">
-              Digite sua altura acima para habilitar o scan
+              {!heightValid ? 'Digite sua altura acima para habilitar o scan' : 'Confirme o aviso acima para continuar'}
             </p>
           )}
           <button

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFavorites } from '@/contexts/FavoritesContext'
@@ -845,10 +846,18 @@ export default function ContaPage() {
                 </button>
               </li>
             ))}
+            <li className="mt-6 border-t border-gold/10 pt-4">
+              <Link
+                href="/conta/tamanhos"
+                className="block px-3 py-2.5 text-sm text-offwhite/50 hover:text-gold transition-colors"
+              >
+                Meus tamanhos
+              </Link>
+            </li>
             <li>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-3 py-2.5 text-sm text-offwhite/30 hover:text-red-400 transition-colors mt-4"
+                className="w-full text-left px-3 py-2.5 text-sm text-offwhite/30 hover:text-red-400 transition-colors mt-1"
               >
                 Sair
               </button>

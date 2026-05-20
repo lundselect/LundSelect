@@ -1,0 +1,39 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - img [ref=e4]:
+        - generic [ref=e22]:
+          - generic [ref=e24]: CHANEL
+          - generic [ref=e25]: CRUISE 2024
+          - generic [ref=e26]: SHOW
+        - generic [ref=e78]: VOGUE
+      - generic:
+        - strong: Camila 💕
+        - text: omg what are you wearing to the party on Saturday?? 👀✨
+      - generic: omg i have literally nothing 😭
+    - generic:
+      - img:
+        - generic:
+          - generic: YSL
+        - generic:
+          - generic: lundselect.com
+          - generic: Lund Select
+      - generic:
+        - emphasis: opens laptop
+        - text: ok let me find something cute for Saturday...
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic: Lund Select
+    - generic:
+      - generic: ✦
+      - generic: ✦
+      - generic: ✦
+      - generic: ✦
+      - img
+      - generic:
+        - generic: LUND
+        - generic: Select
+        - generic: curated brazilian fashion
+  - generic [ref=e134] [cursor=pointer]: skip intro

@@ -17,7 +17,6 @@ interface FlowState {
   measurements?: Partial<Measurements>
   shapeAnswers?: Partial<ShapeAnswers>
   fitPreferences?: Partial<FitPreferences>
-  scanSizeHint?: string
 }
 
 function computeConfidence(state: FlowState) {
@@ -52,10 +51,14 @@ export default function SizeGuideFlow() {
 
   const handleScanDone = (
     shapeAnswers: Partial<ShapeAnswers>,
-    fitPreferences: Partial<FitPreferences>,
-    sizeHint?: string
+    scanMeasurements: Partial<Measurements>
   ) => {
-    setState(s => ({ ...s, shapeAnswers, fitPreferences, scanSizeHint: sizeHint }))
+    setState(s => ({
+      ...s,
+      shapeAnswers: { ...s.shapeAnswers, ...shapeAnswers },
+      // Scan estimates fill gaps — manual measurements from Step 1 always win
+      measurements: { ...scanMeasurements, ...s.measurements },
+    }))
     setStep('questionnaire')
   }
 
@@ -154,6 +157,7 @@ export default function SizeGuideFlow() {
 
       {!saving && step === 'scan' && (
         <Step2BodyScan
+          initialMeasurements={state.measurements}
           onComplete={handleScanDone}
           onSkip={() => setStep('questionnaire')}
         />

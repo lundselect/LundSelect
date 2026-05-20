@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lund Select</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,600;1,400&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f2ede4}
+#stage{position:fixed;inset:0;width:100%;height:100%;background:#f2ede4}
+.scene{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity 1.2s ease;pointer-events:none}
+.scene.active{opacity:1;pointer-events:auto}
+.scene svg{width:100%;height:100%;position:absolute;inset:0}
+
+/* Text bubbles */
+.bubble{position:absolute;background:#fff;border-radius:18px;padding:10px 15px;font-family:'Caveat',cursive;font-size:clamp(13px,1.6vw,18px);line-height:1.4;box-shadow:0 4px 20px rgba(0,0,0,0.12);opacity:0;transform:translateY(12px) scale(0.92);transition:opacity 0.45s cubic-bezier(0.34,1.56,0.64,1),transform 0.45s cubic-bezier(0.34,1.56,0.64,1);max-width:280px;color:#3a2e28;pointer-events:none;z-index:10}
+.bubble::after{content:'';position:absolute;bottom:-8px;left:22px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid #fff}
+.bubble.from-right::after{left:auto;right:22px}
+.bubble.show{opacity:1;transform:translateY(0) scale(1)}
+
+/* Scene 3 zoom overlay */
+#screen-zoom{position:fixed;inset:0;background:#f4ede4;opacity:0;z-index:50;transition:opacity 0.8s ease}
+
+/* Logo scene */
+#scene-logo{z-index:60;background:#f4ede4;display:flex;align-items:center;justify-content:center;flex-direction:column}
+#logo-wrap{text-align:center;position:relative}
+#logo-lund{font-family:'Bodoni Moda',serif;font-weight:600;font-size:clamp(90px,17vw,210px);color:#b8302a;line-height:0.9;display:block;letter-spacing:0.02em;opacity:0}
+#logo-select{font-family:'Bodoni Moda',serif;font-weight:400;font-style:italic;font-size:clamp(52px,9.8vw,118px);color:#82201a;display:block;letter-spacing:0.04em;margin-top:0.08em;opacity:0}
+#logo-line{width:180px;height:1px;background:rgba(200,168,136,0.8);margin:18px auto 0;opacity:0;transition:opacity 0.8s ease}
+#logo-tagline{font-family:'Caveat',cursive;font-size:clamp(14px,1.8vw,20px);letter-spacing:0.22em;color:#8a7a6a;text-transform:uppercase;margin-top:14px;opacity:0;transition:opacity 1s ease}
+#dashed-border{position:absolute;inset:20px;border:1.5px dashed rgba(180,155,120,0.25);border-radius:2px;opacity:0;transition:opacity 1s ease;pointer-events:none;z-index:1}
+.corner-mark{position:absolute;font-size:14px;color:rgba(180,155,120,0.4);opacity:0;transition:opacity 1s ease}
+.corner-mark.tl{top:28px;left:28px}
+.corner-mark.tr{top:28px;right:28px}
+.corner-mark.bl{bottom:28px;left:28px}
+.corner-mark.br{bottom:28px;right:28px}
+.rule-line{position:absolute;left:5%;right:5%;height:1px;border-top:1px dashed rgba(160,138,108,0.15);opacity:0;transition:opacity 1s ease}
+
+/* Progress bar */
+#progress{position:fixed;bottom:0;left:0;height:2px;background:#b8302a;width:0%;z-index:200;transition:none}
+
+/* Skip button */
+#skip{position:fixed;bottom:18px;right:22px;font-family:'Caveat',cursive;font-size:15px;color:rgba(90,70,55,0.6);cursor:pointer;z-index:200;opacity:0;transition:opacity 0.5s ease;letter-spacing:0.08em;padding:6px 10px;border:1px solid rgba(90,70,55,0.2);border-radius:20px;background:rgba(242,237,228,0.7);backdrop-filter:blur(4px)}
+#skip:hover{color:#b8302a;border-color:rgba(184,48,42,0.4)}
+
+/* Letter animation */
+.letter-wrap{display:inline-block;position:relative;overflow:visible}
+.letter-svg{position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- SCENE 1: BEDROOM -->
+<div class="scene active" id="scene-bedroom">
+<svg viewBox="0 0 1000 680" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <!-- Watercolor displacement for fills -->
+  <filter id="wc-fill" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.04 0.03" numOctaves="4" seed="2" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="18" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <!-- Watercolor displacement for lines -->
+  <filter id="wc-line" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.07 0.05" numOctaves="3" seed="5" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <!-- Paper grain -->
+  <filter id="paper-grain" x="0%" y="0%" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" result="grain"/>
+    <feColorMatrix type="saturate" values="0" in="grain" result="grey"/>
+    <feBlend in="SourceGraphic" in2="grey" mode="multiply" result="blend"/>
+    <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+  </filter>
+  <!-- Mushroom lamp glow -->
+  <radialGradient id="glow-amber" cx="50%" cy="60%" r="50%">
+    <stop offset="0%" stop-color="rgba(255,200,100,0.55)"/>
+    <stop offset="40%" stop-color="rgba(255,180,60,0.22)"/>
+    <stop offset="100%" stop-color="rgba(255,160,40,0)"/>
+  </radialGradient>
+  <radialGradient id="glow-window" cx="50%" cy="0%" r="80%">
+    <stop offset="0%" stop-color="rgba(255,240,200,0.35)"/>
+    <stop offset="100%" stop-color="rgba(255,240,200,0)"/>
+  </radialGradient>
+  <!-- Wood floor gradient -->
+  <linearGradient id="floor-grad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#c8a878" stop-opacity="0.55"/>
+    <stop offset="100%" stop-color="#a07848" stop-opacity="0.75"/>
+  </linearGradient>
+</defs>
+
+<!-- PAPER BACKGROUND -->
+<rect width="1000" height="680" fill="#f2ede4"/>
+<!-- Subtle vignette -->
+<radialGradient id="vig1" cx="50%" cy="50%" r="70%">
+  <stop offset="0%" stop-color="rgba(242,237,228,0)"/>
+  <stop offset="100%" stop-color="rgba(210,195,175,0.3)"/>
+</radialGradient>
+<rect width="1000" height="680" fill="url(#vig1)"/>
+
+<!-- WALL: warm cream with subtle corner tones -->
+<rect width="1000" height="420" fill="rgba(238,230,218,0.9)" filter="url(#wc-fill)"/>
+<!-- Crown moulding line -->
+<rect y="58" width="1000" height="3" fill="rgba(190,178,158,0.5)" filter="url(#wc-line)"/>
+<rect y="48" width="1000" height="12" fill="rgba(220,210,195,0.4)" filter="url(#wc-line)"/>
+
+<!-- FLOOR -->
+<rect y="420" width="1000" height="260" fill="rgba(192,158,108,0.45)" filter="url(#wc-fill)"/>
+<!-- Floor planks -->
+<g filter="url(#wc-line)" opacity="0.5">
+  <rect y="432" x="0" width="1000" height="2" fill="rgba(155,118,72,0.4)"/>
+  <rect y="458" x="0" width="1000" height="2" fill="rgba(155,118,72,0.3)"/>
+  <rect y="484" x="0" width="1000" height="2" fill="rgba(155,118,72,0.35)"/>
+  <rect y="512" x="0" width="1000" height="2" fill="rgba(155,118,72,0.3)"/>
+  <rect y="540" x="0" width="1000" height="2" fill="rgba(155,118,72,0.35)"/>
+  <rect y="568" x="0" width="1000" height="2" fill="rgba(155,118,72,0.28)"/>
+  <rect y="598" x="0" width="1000" height="2" fill="rgba(155,118,72,0.25)"/>
+  <rect y="628" x="0" width="1000" height="2" fill="rgba(155,118,72,0.22)"/>
+  <rect y="658" x="0" width="1000" height="2" fill="rgba(155,118,72,0.20)"/>
+</g>
+<!-- Floor plank verticals -->
+<g filter="url(#wc-line)" opacity="0.25">
+  <line x1="160" y1="420" x2="160" y2="680" stroke="rgba(140,105,60,0.3)" stroke-width="1"/>
+  <line x1="340" y1="420" x2="340" y2="680" stroke="rgba(140,105,60,0.25)" stroke-width="1"/>
+  <line x1="520" y1="420" x2="520" y2="680" stroke="rgba(140,105,60,0.3)" stroke-width="1"/>
+  <line x1="700" y1="420" x2="700" y2="680" stroke="rgba(140,105,60,0.25)" stroke-width="1"/>
+  <line x1="870" y1="420" x2="870" y2="680" stroke="rgba(140,105,60,0.2)" stroke-width="1"/>
+</g>
+
+<!-- CHANEL POSTER on wall -->
+<g filter="url(#wc-line)">
+  <rect x="360" y="80" width="220" height="160" fill="rgba(248,244,238,0.95)" stroke="rgba(180,168,150,0.5)" stroke-width="1.5"/>
+  <text x="470" y="145" font-family="Georgia,serif" font-size="22" fill="rgba(40,35,28,0.85)" text-anchor="middle" letter-spacing="3" font-weight="300">CHANEL</text>
+  <text x="470" y="168" font-family="Georgia,serif" font-size="11" fill="rgba(60,50,38,0.65)" text-anchor="middle" letter-spacing="2">CRUISE 2024</text>
+  <text x="470" y="185" font-family="Georgia,serif" font-size="11" fill="rgba(60,50,38,0.65)" text-anchor="middle" letter-spacing="4">SHOW</text>
+  <!-- Thin border inside -->
+  <rect x="370" y="90" width="200" height="140" fill="none" stroke="rgba(180,168,150,0.4)" stroke-width="0.8"/>
+</g>
+
+<!-- ARC LAMP (left background) -->
+<g filter="url(#wc-line)">
+  <!-- Base -->
+  <ellipse cx="108" cy="530" rx="28" ry="9" fill="rgba(55,50,45,0.7)"/>
+  <!-- Pole -->
+  <path d="M108 522 Q118 440 210 160" stroke="rgba(50,45,40,0.8)" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <!-- Lamp head -->
+  <ellipse cx="215" cy="152" rx="32" ry="20" fill="rgba(45,40,35,0.85)"/>
+  <ellipse cx="215" cy="156" rx="26" ry="12" fill="rgba(255,230,160,0.25)"/>
+</g>
+
+<!-- WINDOW (right wall area) - subtle daylight -->
+<g>
+  <rect x="850" y="80" width="140" height="220" fill="rgba(220,238,255,0.25)" filter="url(#wc-fill)"/>
+  <rect x="850" y="80" width="140" height="220" fill="url(#glow-window)"/>
+  <!-- Window frame -->
+  <rect x="850" y="80" width="140" height="220" fill="none" stroke="rgba(180,168,148,0.6)" stroke-width="3" filter="url(#wc-line)"/>
+  <line x1="920" y1="80" x2="920" y2="300" stroke="rgba(180,168,148,0.5)" stroke-width="2" filter="url(#wc-line)"/>
+  <line x1="850" y1="190" x2="990" y2="190" stroke="rgba(180,168,148,0.5)" stroke-width="2" filter="url(#wc-line)"/>
+</g>
+
+<!-- CLOTHING RACK (right) -->
+<g filter="url(#wc-line)">
+  <!-- Rack pole -->
+  <line x1="870" y1="130" x2="990" y2="130" stroke="rgba(80,70,60,0.75)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="870" y1="100" x2="870" y2="395" stroke="rgba(80,70,60,0.75)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="990" y1="100" x2="990" y2="395" stroke="rgba(80,70,60,0.75)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="860" y1="395" x2="1000" y2="395" stroke="rgba(80,70,60,0.7)" stroke-width="4" stroke-linecap="round"/>
+  <!-- Hanging garments -->
+  <path d="M892 130 Q892 118 900 115 Q908 112 910 130 Z" fill="rgba(80,75,70,0.7)" stroke="rgba(60,55,50,0.5)" stroke-width="1"/>
+  <rect x="886" y="130" width="24" height="100" rx="2" fill="rgba(80,75,70,0.55)" filter="url(#wc-fill)"/>
+  <path d="M920 130 Q920 118 928 115 Q936 112 938 130 Z" fill="rgba(100,90,80,0.65)"/>
+  <rect x="914" y="130" width="22" height="90" rx="2" fill="rgba(120,110,100,0.5)" filter="url(#wc-fill)"/>
+  <path d="M950 130 Q950 118 958 115 Q966 112 968 130 Z" fill="rgba(60,55,50,0.75)"/>
+  <rect x="944" y="130" width="26" height="110" rx="2" fill="rgba(55,50,45,0.6)" filter="url(#wc-fill)"/>
+  <path d="M978 130 Q978 118 984 115 Q990 112 990 130 Z" fill="rgba(140,125,108,0.65)"/>
+  <rect x="972" y="130" width="18" height="85" rx="2" fill="rgba(145,130,112,0.55)" filter="url(#wc-fill)"/>
+</g>
+
+<!-- JUTE AREA RUG -->
+<ellipse cx="430" cy="570" rx="280" ry="85" fill="rgba(185,162,118,0.4)" filter="url(#wc-fill)"/>
+<ellipse cx="430" cy="570" rx="260" ry="75" fill="rgba(175,152,108,0.25)" filter="url(#wc-line)"/>
+
+<!-- SHEEPSKIN RUG -->
+<g filter="url(#wc-fill)">
+  <path d="M260 560 Q210 530 195 555 Q175 585 210 610 Q250 635 330 640 Q410 645 460 625 Q510 605 500 575 Q490 545 450 540 Q400 535 350 545 Q300 540 260 560Z" fill="rgba(235,228,215,0.85)"/>
+  <!-- Fluffy texture strokes -->
+  <path d="M220 575 Q230 565 245 572" stroke="rgba(210,200,188,0.6)" stroke-width="2" fill="none"/>
+  <path d="M270 545 Q285 538 295 548" stroke="rgba(210,200,188,0.6)" stroke-width="2" fill="none"/>
+  <path d="M350 537 Q365 530 378 540" stroke="rgba(210,200,188,0.5)" stroke-width="2" fill="none"/>
+  <path d="M420 538 Q434 532 445 542" stroke="rgba(210,200,188,0.5)" stroke-width="2" fill="none"/>
+  <path d="M460 558 Q472 550 480 562" stroke="rgba(210,200,188,0.55)" stroke-width="2" fill="none"/>
+  <path d="M300 610 Q315 602 325 612" stroke="rgba(210,200,188,0.5)" stroke-width="2" fill="none"/>
+  <path d="M380 620 Q395 613 405 622" stroke="rgba(210,200,188,0.45)" stroke-width="2" fill="none"/>
+</g>
+
+<!-- MUSHROOM LAMP GLOW -->
+<ellipse cx="530" cy="545" rx="80" ry="55" fill="url(#glow-amber)"/>
+<!-- Mushroom lamp -->
+<g filter="url(#wc-line)">
+  <ellipse cx="530" cy="505" rx="32" ry="22" fill="rgba(240,210,140,0.9)"/>
+  <ellipse cx="530" cy="505" rx="32" ry="22" fill="rgba(255,220,100,0.3)"/>
+  <rect x="524" y="527" width="12" height="22" rx="4" fill="rgba(210,185,130,0.8)"/>
+  <ellipse cx="530" cy="549" rx="16" ry="5" fill="rgba(170,145,95,0.5)"/>
+</g>
+
+<!-- VINYL RECORD PLAYER -->
+<g filter="url(#wc-line)">
+  <rect x="600" y="548" width="95" height="70" rx="4" fill="rgba(45,38,30,0.8)"/>
+  <circle cx="647" cy="577" r="26" fill="rgba(30,25,20,0.9)"/>
+  <circle cx="647" cy="577" r="20" fill="rgba(50,42,35,0.7)"/>
+  <circle cx="647" cy="577" r="5" fill="rgba(200,170,120,0.8)"/>
+  <line x1="660" y1="560" x2="690" y2="548" stroke="rgba(160,140,110,0.7)" stroke-width="2"/>
+</g>
+
+<!-- CAT on rug -->
+<g filter="url(#wc-line)">
+  <!-- Body -->
+  <ellipse cx="480" cy="595" rx="22" ry="16" fill="rgba(130,118,100,0.75)"/>
+  <!-- Head -->
+  <circle cx="480" cy="572" r="14" fill="rgba(130,118,100,0.8)"/>
+  <!-- Ears -->
+  <path d="M470 562 L466 550 L478 558Z" fill="rgba(115,105,88,0.8)"/>
+  <path d="M490 562 L494 550 L482 558Z" fill="rgba(115,105,88,0.8)"/>
+  <!-- Tail -->
+  <path d="M502 595 Q525 580 520 600" stroke="rgba(115,105,88,0.7)" stroke-width="6" fill="none" stroke-linecap="round"/>
+</g>
+
+<!-- MAGAZINE on floor -->
+<g filter="url(#wc-line)" transform="rotate(-12, 555, 620)">
+  <rect x="540" y="610" width="70" height="50" rx="2" fill="rgba(220,212,200,0.8)"/>
+  <rect x="540" y="610" width="35" height="50" fill="rgba(180,165,140,0.5)"/>
+  <text x="555" y="632" font-family="Georgia,serif" font-size="7" fill="rgba(80,65,50,0.6)" letter-spacing="1">VOGUE</text>
+</g>
+
+<!-- NIGHTSTAND -->
+<g filter="url(#wc-line)">
+  <rect x="150" y="375" width="55" height="55" rx="3" fill="rgba(160,128,88,0.7)"/>
+  <!-- Candle on nightstand -->
+  <rect x="168" y="355" width="8" height="22" rx="2" fill="rgba(235,225,200,0.9)"/>
+  <ellipse cx="172" cy="354" rx="4" ry="3" fill="rgba(255,160,40,0.8)"/>
+  <!-- Book -->
+  <rect x="178" y="368" width="22" height="8" rx="1" fill="rgba(140,120,95,0.75)" transform="rotate(-8,189,372)"/>
+</g>
+
+<!-- PLATFORM BED SHADOW -->
+<ellipse cx="350" cy="430" rx="220" ry="25" fill="rgba(140,110,70,0.2)" filter="url(#wc-fill)"/>
+
+<!-- BED FRAME / PLATFORM -->
+<g filter="url(#wc-fill)">
+  <rect x="130" y="380" width="440" height="60" rx="4" fill="rgba(155,128,88,0.65)"/>
+</g>
+
+<!-- HEADBOARD -->
+<g filter="url(#wc-fill)">
+  <rect x="155" y="290" width="390" height="95" rx="6" fill="rgba(180,155,115,0.55)"/>
+</g>
+
+<!-- BED PILLOWS -->
+<g filter="url(#wc-fill)">
+  <rect x="175" y="305" width="140" height="75" rx="8" fill="rgba(228,220,208,0.9)"/>
+  <rect x="185" y="310" width="125" height="65" rx="6" fill="rgba(215,205,192,0.6)"/>
+  <rect x="325" y="308" width="130" height="72" rx="8" fill="rgba(225,218,206,0.85)"/>
+</g>
+
+<!-- DARK GREY DUVET (rumpled) -->
+<g filter="url(#wc-fill)">
+  <!-- Base layer -->
+  <path d="M130 365 Q160 340 240 345 Q320 342 400 348 Q480 344 565 360 Q570 380 565 408 Q480 420 395 418 Q310 416 230 420 Q160 418 130 410 Z" fill="rgba(88,92,98,0.75)"/>
+  <!-- Duvet fold layers -->
+  <path d="M130 365 Q200 355 290 358 Q380 354 470 362 Q520 370 565 378" stroke="rgba(65,68,75,0.5)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M140 378 Q220 368 310 372 Q400 368 490 376 Q535 382 565 390" stroke="rgba(65,68,75,0.4)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M135 392 Q215 383 305 386 Q395 382 485 390 Q540 396 565 402" stroke="rgba(65,68,75,0.35)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Duvet highlight wash -->
+  <path d="M200 350 Q300 345 400 350 Q450 355 480 365 Q440 360 380 358 Q290 354 200 360 Z" fill="rgba(120,125,135,0.3)"/>
+</g>
+
+<!-- THE GIRL - lying on bed -->
+<g id="girl-bedroom" filter="url(#wc-line)">
+  <!-- Body / torso -->
+  <path d="M480 355 Q510 342 545 348 Q560 355 558 375 Q550 390 520 395 Q490 398 475 385 Q465 372 480 355Z" fill="rgba(145,158,175,0.75)"/>
+  <!-- Sweater texture -->
+  <path d="M485 358 Q510 350 540 355" stroke="rgba(115,128,148,0.4)" stroke-width="2" fill="none"/>
+  <path d="M483 368 Q512 360 545 365" stroke="rgba(115,128,148,0.35)" stroke-width="2" fill="none"/>
+  <path d="M482 378 Q510 370 548 375" stroke="rgba(115,128,148,0.35)" stroke-width="2" fill="none"/>
+  <!-- Arm propped up -->
+  <path d="M480 375 Q465 360 460 340 Q458 328 468 322" stroke="rgba(216,176,136,0.85)" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <!-- Legs bent up (behind, ankles crossed) -->
+  <path d="M480 385 Q500 415 510 445 Q515 462 508 472" stroke="rgba(145,158,175,0.7)" stroke-width="18" fill="none" stroke-linecap="round"/>
+  <path d="M510 390 Q528 420 535 450 Q538 465 530 475" stroke="rgba(145,158,175,0.65)" stroke-width="15" fill="none" stroke-linecap="round"/>
+  <!-- Feet -->
+  <ellipse cx="508" cy="476" rx="12" ry="8" fill="rgba(216,176,136,0.8)" transform="rotate(20,508,476)"/>
+  <ellipse cx="530" cy="478" rx="11" ry="7" fill="rgba(216,176,136,0.75)" transform="rotate(15,530,478)"/>
+
+  <!-- Neck -->
+  <rect x="460" y="298" width="18" height="28" rx="6" fill="rgba(216,176,136,0.85)"/>
+  <!-- Choker -->
+  <rect x="457" y="308" width="24" height="5" rx="2.5" fill="rgba(30,25,22,0.9)"/>
+  <circle cx="469" cy="310" r="3" fill="rgba(210,180,100,0.9)"/>
+
+  <!-- HEAD -->
+  <ellipse cx="460" cy="288" rx="34" ry="36" fill="rgba(216,176,136,0.88)" filter="url(#wc-fill)"/>
+  <!-- Blush -->
+  <ellipse cx="442" cy="294" rx="10" ry="6" fill="rgba(220,155,135,0.22)"/>
+  <!-- Hair base (back) -->
+  <path d="M432 268 Q445 242 460 240 Q478 238 488 252 Q496 265 494 285 Q498 310 490 330 Q480 345 470 352 Q460 340 455 320 Q450 300 452 278 Q440 285 432 268Z" fill="rgba(58,36,16,0.85)" filter="url(#wc-fill)"/>
+  <!-- Hair mid-tones -->
+  <path d="M488 252 Q498 268 496 290 Q498 315 488 335 Q495 318 492 295 Q496 272 488 252Z" fill="rgba(90,56,32,0.6)"/>
+  <!-- Caramel highlights -->
+  <path d="M475 245 Q485 258 484 278 Q486 260 476 246Z" fill="rgba(138,96,48,0.55)"/>
+  <path d="M460 240 Q468 252 465 272 Q468 254 462 241Z" fill="rgba(138,96,48,0.4)"/>
+
+  <!-- FACE -->
+  <!-- Eye (visible) -->
+  <ellipse cx="450" cy="285" rx="8" ry="6" fill="rgba(35,28,20,0.9)"/>
+  <ellipse cx="450" cy="284" rx="7" ry="5" fill="rgba(60,42,25,0.95)"/>
+  <!-- Catchlight -->
+  <ellipse cx="453" cy="282" rx="2.5" ry="2.5" fill="rgba(255,255,255,0.95)"/>
+  <ellipse cx="448" cy="285" rx="1" ry="1" fill="rgba(255,255,255,0.7)"/>
+  <!-- Eyebrow -->
+  <path d="M442 275 Q450 271 460 273" stroke="rgba(55,38,20,0.8)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <path d="M452 292 Q455 298 460 296" stroke="rgba(185,145,105,0.5)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Lips -->
+  <path d="M448 303 Q453 308 460 304" stroke="rgba(180,120,105,0.8)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M449 303 Q454 301 460 303" stroke="rgba(165,105,90,0.6)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Freckles -->
+  <circle cx="448" cy="290" r="1" fill="rgba(165,120,80,0.4)"/>
+  <circle cx="455" cy="289" r="0.8" fill="rgba(165,120,80,0.35)"/>
+  <circle cx="452" cy="291" r="0.7" fill="rgba(165,120,80,0.3)"/>
+  <!-- Earring -->
+  <circle cx="432" cy="290" r="3" fill="rgba(210,180,100,0.85)"/>
+
+  <!-- PHONE in hand -->
+  <rect x="448" y="315" width="28" height="48" rx="5" fill="rgba(28,25,22,0.9)" transform="rotate(-15,462,339)"/>
+  <rect x="451" y="318" width="22" height="40" rx="3" fill="rgba(100,140,200,0.5)" transform="rotate(-15,462,339)"/>
+  <!-- Screen glow -->
+  <ellipse cx="462" cy="338" rx="18" ry="28" fill="rgba(150,180,255,0.12)" transform="rotate(-15,462,338)"/>
+</g>
+
+<!-- PAPER GRAIN OVERLAY -->
+<rect width="1000" height="680" fill="rgba(242,237,228,0.06)" filter="url(#paper-grain)"/>
+</svg>
+
+<!-- TEXT BUBBLES -->
+<div class="bubble from-right" id="bubble1" style="top:22%;right:8%">
+  <strong style="font-size:0.9em;color:#8a6a58">Camila 💕</strong><br>
+  omg what are you wearing to the party on Saturday?? 👀✨
+</div>
+<div class="bubble" id="bubble2" style="top:42%;left:52%">
+  omg i have literally nothing 😭
+</div>
+</div>
+
+<!-- SCENE 2: VANITY -->
+<div class="scene" id="scene-vanity">
+<svg viewBox="0 0 1000 680" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <filter id="wc-fill2" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.04 0.03" numOctaves="4" seed="8" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="18" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="wc-line2" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.07 0.05" numOctaves="3" seed="12" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="paper-grain2" x="0%" y="0%" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" result="grain"/>
+    <feColorMatrix type="saturate" values="0" in="grain" result="grey"/>
+    <feBlend in="SourceGraphic" in2="grey" mode="multiply" result="blend"/>
+    <feComposite in="blend" in2="SourceGraphic" operator="in"/>
+  </filter>
+  <radialGradient id="bulb-glow" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="rgba(255,220,140,0.7)"/>
+    <stop offset="50%" stop-color="rgba(255,200,100,0.2)"/>
+    <stop offset="100%" stop-color="rgba(255,190,80,0)"/>
+  </radialGradient>
+  <radialGradient id="mushroom-glow2" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="rgba(255,200,100,0.5)"/>
+    <stop offset="100%" stop-color="rgba(255,180,60,0)"/>
+  </radialGradient>
+  <radialGradient id="window-glow2" cx="50%" cy="30%" r="70%">
+    <stop offset="0%" stop-color="rgba(255,242,215,0.45)"/>
+    <stop offset="100%" stop-color="rgba(255,242,215,0)"/>
+  </radialGradient>
+  <radialGradient id="screen-glow" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="rgba(200,220,255,0.25)"/>
+    <stop offset="100%" stop-color="rgba(200,220,255,0)"/>
+  </radialGradient>
+</defs>
+
+<!-- PAPER BACKGROUND -->
+<rect width="1000" height="680" fill="#f2ede4"/>
+<radialGradient id="vig2" cx="50%" cy="50%" r="70%">
+  <stop offset="0%" stop-color="rgba(242,237,228,0)"/>
+  <stop offset="100%" stop-color="rgba(210,195,175,0.3)"/>
+</radialGradient>
+<rect width="1000" height="680" fill="url(#vig2)"/>
+
+<!-- WALL -->
+<rect width="1000" height="420" fill="rgba(238,230,218,0.9)" filter="url(#wc-fill2)"/>
+<!-- Crown moulding -->
+<rect y="55" width="1000" height="3" fill="rgba(190,178,158,0.5)" filter="url(#wc-line2)"/>
+<rect y="45" width="1000" height="12" fill="rgba(220,210,195,0.4)" filter="url(#wc-line2)"/>
+
+<!-- FLOOR -->
+<rect y="420" width="1000" height="260" fill="rgba(192,158,108,0.4)" filter="url(#wc-fill2)"/>
+<g filter="url(#wc-line2)" opacity="0.45">
+  <rect y="432" width="1000" height="2" fill="rgba(155,118,72,0.4)"/>
+  <rect y="460" width="1000" height="2" fill="rgba(155,118,72,0.3)"/>
+  <rect y="490" width="1000" height="2" fill="rgba(155,118,72,0.35)"/>
+  <rect y="520" width="1000" height="2" fill="rgba(155,118,72,0.3)"/>
+  <rect y="552" width="1000" height="2" fill="rgba(155,118,72,0.28)"/>
+  <rect y="585" width="1000" height="2" fill="rgba(155,118,72,0.25)"/>
+  <rect y="620" width="1000" height="2" fill="rgba(155,118,72,0.22)"/>
+  <rect y="655" width="1000" height="2" fill="rgba(155,118,72,0.2)"/>
+</g>
+
+<!-- WINDOW (right) -->
+<g>
+  <rect x="840" y="68" width="155" height="240" fill="rgba(225,242,255,0.28)" filter="url(#wc-fill2)"/>
+  <rect x="840" y="68" width="155" height="240" fill="url(#window-glow2)"/>
+  <rect x="840" y="68" width="155" height="240" fill="none" stroke="rgba(180,168,148,0.6)" stroke-width="3" filter="url(#wc-line2)"/>
+  <line x1="917" y1="68" x2="917" y2="308" stroke="rgba(180,168,148,0.5)" stroke-width="2" filter="url(#wc-line2)"/>
+  <!-- Roman shade -->
+  <path d="M840 68 L995 68 L995 150 Q917 165 840 150 Z" fill="rgba(210,195,170,0.55)" filter="url(#wc-fill2)"/>
+  <line x1="840" y1="100" x2="995" y2="100" stroke="rgba(185,170,148,0.4)" stroke-width="1.5" filter="url(#wc-line2)"/>
+  <line x1="840" y1="118" x2="995" y2="118" stroke="rgba(185,170,148,0.35)" stroke-width="1" filter="url(#wc-line2)"/>
+  <line x1="840" y1="134" x2="995" y2="134" stroke="rgba(185,170,148,0.3)" stroke-width="1" filter="url(#wc-line2)"/>
+</g>
+
+<!-- SPUTNIK CEILING LIGHT -->
+<g filter="url(#wc-line2)">
+  <!-- Center sphere -->
+  <circle cx="160" cy="95" r="18" fill="rgba(195,165,95,0.8)"/>
+  <circle cx="160" cy="95" r="14" fill="rgba(215,185,115,0.7)"/>
+  <!-- Arms radiating -->
+  <line x1="160" y1="77" x2="160" y2="55" stroke="rgba(180,150,80,0.8)" stroke-width="2.5"/>
+  <line x1="178" y1="77" x2="195" y2="60" stroke="rgba(180,150,80,0.75)" stroke-width="2.5"/>
+  <line x1="178" y1="95" x2="205" y2="95" stroke="rgba(180,150,80,0.75)" stroke-width="2.5"/>
+  <line x1="178" y1="113" x2="195" y2="130" stroke="rgba(180,150,80,0.7)" stroke-width="2.5"/>
+  <line x1="142" y1="77" x2="125" y2="60" stroke="rgba(180,150,80,0.75)" stroke-width="2.5"/>
+  <line x1="142" y1="95" x2="115" y2="95" stroke="rgba(180,150,80,0.75)" stroke-width="2.5"/>
+  <line x1="142" y1="113" x2="125" y2="130" stroke="rgba(180,150,80,0.7)" stroke-width="2.5"/>
+  <!-- Bulbs -->
+  <circle cx="160" cy="52" r="7" fill="rgba(255,240,180,0.9)"/>
+  <ellipse cx="160" cy="52" rx="12" ry="10" fill="url(#bulb-glow)" opacity="0.6"/>
+  <circle cx="198" cy="57" r="6" fill="rgba(255,240,180,0.85)"/>
+  <ellipse cx="198" cy="57" rx="11" ry="9" fill="url(#bulb-glow)" opacity="0.5"/>
+  <circle cx="208" cy="95" r="6" fill="rgba(255,240,180,0.85)"/>
+  <ellipse cx="208" cy="95" rx="11" ry="9" fill="url(#bulb-glow)" opacity="0.5"/>
+  <circle cx="198" cy="133" r="6" fill="rgba(255,240,180,0.8)"/>
+  <circle cx="122" cy="57" r="6" fill="rgba(255,240,180,0.85)"/>
+  <circle cx="112" cy="95" r="6" fill="rgba(255,240,180,0.85)"/>
+  <circle cx="122" cy="133" r="6" fill="rgba(255,240,180,0.8)"/>
+  <!-- Ceiling mount -->
+  <rect x="154" y="68" width="12" height="20" fill="rgba(180,150,80,0.7)"/>
+  <rect x="148" y="65" width="24" height="6" rx="2" fill="rgba(195,165,95,0.8)"/>
+</g>
+
+<!-- YSL fashion poster on left wall -->
+<g filter="url(#wc-line2)">
+  <rect x="28" y="85" width="110" height="150" fill="rgba(248,244,238,0.9)" stroke="rgba(180,168,150,0.5)" stroke-width="1.5"/>
+  <!-- Silhouette figure -->
+  <path d="M75 100 Q83 110 80 135 Q78 155 75 175" stroke="rgba(30,25,20,0.7)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <circle cx="79" cy="97" r="8" fill="rgba(30,25,20,0.65)"/>
+  <text x="83" y="218" font-family="Georgia,serif" font-size="10" fill="rgba(30,25,20,0.65)" text-anchor="middle" letter-spacing="2">YSL</text>
+</g>
+
+<!-- VANITY DESK SHADOW -->
+<ellipse cx="490" cy="435" rx="450" ry="22" fill="rgba(120,90,50,0.18)" filter="url(#wc-fill2)"/>
+
+<!-- VANITY DESK (dark walnut) -->
+<g filter="url(#wc-fill2)">
+  <rect x="30" y="390" width="940" height="55" rx="3" fill="rgba(72,48,28,0.82)"/>
+  <!-- Desk surface highlight -->
+  <rect x="30" y="390" width="940" height="12" rx="3" fill="rgba(105,72,42,0.4)"/>
+  <!-- Desk legs -->
+  <rect x="50" y="445" width="18" height="80" rx="2" fill="rgba(62,42,22,0.75)"/>
+  <rect x="900" y="445" width="18" height="80" rx="2" fill="rgba(62,42,22,0.75)"/>
+  <rect x="245" y="445" width="14" height="80" rx="2" fill="rgba(62,42,22,0.7)"/>
+  <rect x="710" y="445" width="14" height="80" rx="2" fill="rgba(62,42,22,0.7)"/>
+  <!-- Drawer line -->
+  <line x1="30" y1="418" x2="970" y2="418" stroke="rgba(90,62,35,0.4)" stroke-width="1" filter="url(#wc-line2)"/>
+  <!-- Drawer knobs -->
+  <circle cx="135" cy="415" r="5" fill="rgba(195,215,225,0.6)" stroke="rgba(160,178,190,0.5)" stroke-width="1"/>
+  <circle cx="820" cy="415" r="5" fill="rgba(195,215,225,0.6)" stroke="rgba(160,178,190,0.5)" stroke-width="1"/>
+</g>
+
+<!-- PERFUME TRAY -->
+<g filter="url(#wc-line2)">
+  <rect x="38" y="374" width="140" height="18" rx="2" fill="rgba(175,148,108,0.6)"/>
+  <!-- Perfume 1: tall amber bottle -->
+  <rect x="48" y="328" width="16" height="48" rx="3" fill="rgba(195,142,58,0.75)"/>
+  <rect x="51" y="323" width="10" height="8" rx="2" fill="rgba(175,125,45,0.8)"/>
+  <circle cx="56" cy="321" r="4" fill="rgba(155,108,35,0.7)"/>
+  <!-- Perfume 2: square glass bottle -->
+  <rect x="72" y="335" width="22" height="42" rx="2" fill="rgba(188,212,228,0.55)" stroke="rgba(155,178,195,0.4)" stroke-width="1"/>
+  <rect x="77" y="330" width="12" height="7" rx="1" fill="rgba(165,185,200,0.7)"/>
+  <!-- Perfume 3: tall dark bottle -->
+  <rect x="102" y="320" width="14" height="56" rx="3" fill="rgba(48,38,28,0.8)"/>
+  <rect x="105" y="315" width="8" height="7" rx="2" fill="rgba(38,30,22,0.85)"/>
+  <!-- Perfume 4: round blush bottle -->
+  <ellipse cx="130" cy="355" rx="14" ry="20" fill="rgba(218,175,165,0.65)"/>
+  <rect x="127" y="333" width="7" height="6" rx="1" fill="rgba(195,148,138,0.7)"/>
+  <!-- Perfume 5: crystal faceted -->
+  <path d="M152 376 L148 340 L160 336 L172 340 L168 376Z" fill="rgba(210,228,238,0.55)" stroke="rgba(180,198,210,0.4)" stroke-width="0.8"/>
+  <rect x="153" y="332" width="7" height="6" rx="1" fill="rgba(185,200,212,0.7)"/>
+</g>
+
+<!-- STARBUCKS CUP -->
+<g filter="url(#wc-line2)">
+  <path d="M385 360 Q378 362 376 390 L388 392 Q400 394 402 390 L400 362 Q398 360 385 360Z" fill="rgba(240,238,232,0.9)"/>
+  <path d="M378 368 Q388 365 400 368" stroke="rgba(30,105,60,0.5)" stroke-width="2" fill="none"/>
+  <rect x="392" y="358" width="12" height="6" rx="2" fill="rgba(200,195,185,0.8)"/>
+</g>
+
+<!-- TAPER CANDLE -->
+<g filter="url(#wc-line2)">
+  <!-- Candlestick -->
+  <path d="M440 390 Q444 385 448 390" fill="rgba(195,168,108,0.8)" stroke="rgba(175,148,88,0.6)" stroke-width="1"/>
+  <rect x="440" y="388" width="8" height="5" fill="rgba(195,168,108,0.8)"/>
+  <circle cx="444" cy="393" r="5" fill="rgba(195,168,108,0.85)"/>
+  <!-- Candle body -->
+  <rect x="441" y="342" width="6" height="48" rx="2" fill="rgba(238,230,210,0.95)"/>
+  <!-- Flame -->
+  <path d="M444 340 Q448 332 444 326 Q440 332 444 340Z" fill="rgba(255,180,60,0.9)"/>
+  <ellipse cx="444" cy="333" rx="4" ry="6" fill="rgba(255,220,120,0.5)"/>
+</g>
+
+<!-- MUSHROOM LAMP (small gold) on desk -->
+<g filter="url(#wc-line2)">
+  <ellipse cx="810" cy="370" rx="50" ry="38" fill="rgba(255,200,100,0)" opacity="0.8"/>
+  <radialGradient id="mglow" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="rgba(255,200,100,0.45)"/>
+    <stop offset="100%" stop-color="rgba(255,180,60,0)"/>
+  </radialGradient>
+  <ellipse cx="810" cy="370" rx="50" ry="38" fill="url(#mglow)"/>
+  <ellipse cx="810" cy="358" rx="22" ry="16" fill="rgba(210,182,108,0.9)"/>
+  <ellipse cx="810" cy="358" rx="22" ry="16" fill="rgba(255,220,100,0.3)"/>
+  <rect x="806" y="374" width="8" height="16" rx="3" fill="rgba(185,158,88,0.85)"/>
+  <ellipse cx="810" cy="390" rx="10" ry="4" fill="rgba(155,128,68,0.5)"/>
+</g>
+
+<!-- HOLLYWOOD BULB MIRROR -->
+<g filter="url(#wc-line2)">
+  <!-- Mirror frame (gold) -->
+  <rect x="95" y="68" width="720" height="322" rx="4" fill="rgba(195,168,108,0.7)" stroke="rgba(175,148,88,0.5)" stroke-width="2"/>
+  <!-- Mirror glass -->
+  <rect x="110" y="85" width="690" height="290" rx="2" fill="rgba(192,208,220,0.28)"/>
+  <rect x="110" y="85" width="690" height="40" fill="rgba(215,228,238,0.18)"/>
+  <!-- Mirror reflection streak -->
+  <rect x="130" y="90" width="4" height="280" fill="rgba(255,255,255,0.18)" rx="2"/>
+  <rect x="148" y="90" width="2" height="270" fill="rgba(255,255,255,0.1)" rx="1"/>
+  <!-- Hollywood bulbs (top edge, 13 bulbs) -->
+</g>
+<!-- Bulbs above mirror -->
+<g filter="url(#wc-line2)">
+  <!-- 13 bulbs spaced evenly across ~720px starting at x=95 -->
+  <!-- glow halos first -->
+  <ellipse cx="95" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="152" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="209" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="266" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="323" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="380" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="437" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="494" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="551" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="608" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="665" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="722" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <ellipse cx="815" cy="68" rx="20" ry="18" fill="url(#bulb-glow)" opacity="0.7"/>
+  <!-- Bulb circles -->
+  <circle cx="95" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="152" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="209" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="266" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="323" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="380" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="437" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="494" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="551" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="608" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="665" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="722" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+  <circle cx="815" cy="68" r="9" fill="rgba(255,242,195,0.95)"/>
+</g>
+
+<!-- VANITY STOOL with fluffy jacket -->
+<g filter="url(#wc-fill2)">
+  <!-- Stool legs -->
+  <line x1="862" y1="445" x2="848" y2="530" stroke="rgba(125,98,65,0.7)" stroke-width="6" stroke-linecap="round"/>
+  <line x1="932" y1="445" x2="948" y2="530" stroke="rgba(125,98,65,0.7)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Stool seat -->
+  <ellipse cx="897" cy="445" rx="52" ry="20" fill="rgba(195,178,148,0.65)"/>
+  <!-- Fluffy jacket draped -->
+  <path d="M845 390 Q830 395 828 420 Q835 445 870 455 Q897 462 928 455 Q962 445 965 418 Q962 392 948 388 Q920 378 897 382 Q872 380 845 390Z" fill="rgba(240,232,215,0.88)" filter="url(#wc-fill2)"/>
+  <!-- Fluffy texture strokes -->
+  <path d="M848 400 Q862 392 878 400" stroke="rgba(218,208,192,0.6)" stroke-width="2.5" fill="none"/>
+  <path d="M840 415 Q858 408 872 416" stroke="rgba(218,208,192,0.55)" stroke-width="2.5" fill="none"/>
+  <path d="M905 380 Q920 373 936 382" stroke="rgba(218,208,192,0.55)" stroke-width="2.5" fill="none"/>
+  <path d="M938 396 Q952 388 962 398" stroke="rgba(218,208,192,0.5)" stroke-width="2.5" fill="none"/>
+  <path d="M858 440 Q875 432 892 440" stroke="rgba(218,208,192,0.5)" stroke-width="2" fill="none"/>
+  <path d="M912 442 Q928 435 942 443" stroke="rgba(218,208,192,0.5)" stroke-width="2" fill="none"/>
+</g>
+
+<!-- iMAC SCREEN GLOW -->
+<ellipse cx="540" cy="285" rx="200" ry="130" fill="url(#screen-glow)"/>
+
+<!-- iMAC -->
+<g id="imac" filter="url(#wc-line2)">
+  <!-- Screen outer -->
+  <rect x="355" y="120" width="380" height="260" rx="8" fill="rgba(225,225,230,0.92)"/>
+  <!-- Screen inner (browser) -->
+  <rect x="362" y="127" width="366" height="246" rx="4" fill="rgba(248,245,240,0.98)"/>
+  <!-- Browser chrome bar -->
+  <rect x="362" y="127" width="366" height="22" rx="4" fill="rgba(215,210,205,0.9)"/>
+  <!-- Browser dots -->
+  <circle cx="374" cy="138" r="4" fill="rgba(255,100,90,0.7)"/>
+  <circle cx="385" cy="138" r="4" fill="rgba(255,190,60,0.7)"/>
+  <circle cx="396" cy="138" r="4" fill="rgba(80,185,80,0.7)"/>
+  <!-- URL bar -->
+  <rect x="420" y="132" width="200" height="12" rx="6" fill="rgba(240,236,230,0.9)"/>
+  <text x="520" y="141" font-family="monospace" font-size="7" fill="rgba(90,80,70,0.7)" text-anchor="middle">lundselect.com</text>
+
+  <!-- Lund Select website content on screen -->
+  <!-- Logo on screen -->
+  <text x="545" y="170" font-family="Georgia,serif" font-size="16" fill="rgba(184,48,42,0.9)" text-anchor="middle" font-style="italic" font-weight="600">Lund Select</text>
+  <!-- Nav bar line -->
+  <line x1="370" y1="178" x2="720" y2="178" stroke="rgba(180,168,148,0.5)" stroke-width="0.8"/>
+  <!-- Product cards row 1 -->
+  <rect x="372" y="184" width="108" height="80" rx="2" fill="rgba(210,198,182,0.55)"/>
+  <rect x="490" y="184" width="108" height="80" rx="2" fill="rgba(195,188,175,0.55)"/>
+  <rect x="608" y="184" width="108" height="80" rx="2" fill="rgba(215,205,190,0.55)"/>
+  <!-- Product labels -->
+  <rect x="372" y="268" width="108" height="10" rx="1" fill="rgba(185,170,148,0.4)"/>
+  <rect x="490" y="268" width="108" height="10" rx="1" fill="rgba(185,170,148,0.4)"/>
+  <rect x="608" y="268" width="108" height="10" rx="1" fill="rgba(185,170,148,0.4)"/>
+  <!-- Price tags -->
+  <rect x="372" y="282" width="55" height="7" rx="1" fill="rgba(184,48,42,0.4)"/>
+  <rect x="490" y="282" width="55" height="7" rx="1" fill="rgba(184,48,42,0.4)"/>
+  <rect x="608" y="282" width="55" height="7" rx="1" fill="rgba(184,48,42,0.4)"/>
+
+  <!-- iMac stand -->
+  <path d="M510 380 Q520 395 525 415 L555 415 Q560 395 570 380Z" fill="rgba(205,205,210,0.85)"/>
+  <rect x="500" y="413" width="90" height="8" rx="3" fill="rgba(192,192,198,0.9)"/>
+</g>
+
+<!-- GIRL AT VANITY -->
+<g id="girl-vanity" filter="url(#wc-line2)">
+  <!-- Body / torso (slip dress) -->
+  <path d="M260 300 Q280 285 310 290 Q330 298 325 360 Q315 385 290 388 Q268 385 258 365 Q248 340 260 300Z" fill="rgba(210,195,168,0.7)" filter="url(#wc-fill2)"/>
+  <!-- Dress straps -->
+  <line x1="272" y1="300" x2="265" y2="270" stroke="rgba(195,178,152,0.75)" stroke-width="3" stroke-linecap="round"/>
+  <line x1="310" y1="293" x2="315" y2="265" stroke="rgba(195,178,152,0.75)" stroke-width="3" stroke-linecap="round"/>
+  <!-- Arm reaching toward iMac -->
+  <path d="M305 320 Q340 308 380 290 Q400 282 418 280" stroke="rgba(216,176,136,0.82)" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <!-- Other arm resting -->
+  <path d="M265 330 Q248 342 240 360" stroke="rgba(216,176,136,0.78)" stroke-width="12" fill="none" stroke-linecap="round"/>
+  <!-- Hand at keyboard -->
+  <ellipse cx="420" cy="280" rx="15" ry="8" fill="rgba(216,176,136,0.85)" transform="rotate(-15,420,280)"/>
+
+  <!-- Neck -->
+  <rect x="282" y="258" width="18" height="28" rx="7" fill="rgba(216,176,136,0.82)"/>
+  <!-- Choker -->
+  <rect x="279" y="268" width="25" height="5" rx="2.5" fill="rgba(30,25,22,0.9)"/>
+  <circle cx="291" cy="270" r="3" fill="rgba(210,180,100,0.9)"/>
+
+  <!-- HEAD -->
+  <ellipse cx="292" cy="242" rx="35" ry="37" fill="rgba(216,176,136,0.88)" filter="url(#wc-fill2)"/>
+  <!-- Blush -->
+  <ellipse cx="275" cy="248" rx="10" ry="6" fill="rgba(220,155,135,0.2)"/>
+  <!-- HAIR UPDO with claw clip -->
+  <!-- Hair base sides -->
+  <path d="M262 230 Q268 205 292 200 Q316 200 322 225 Q325 240 320 258 Q310 252 305 238 Q295 228 285 225 Q272 222 265 238 Z" fill="rgba(58,36,16,0.82)" filter="url(#wc-fill2)"/>
+  <!-- Bun at top-back -->
+  <ellipse cx="295" cy="195" rx="28" ry="22" fill="rgba(62,40,18,0.8)" filter="url(#wc-fill2)"/>
+  <!-- Bun highlights -->
+  <path d="M278 185 Q290 178 302 185" stroke="rgba(100,68,32,0.5)" stroke-width="2" fill="none"/>
+  <path d="M275 195 Q290 188 305 195" stroke="rgba(100,68,32,0.45)" stroke-width="1.5" fill="none"/>
+  <!-- Loose face-framing strands -->
+  <path d="M262 230 Q258 248 260 268" stroke="rgba(68,44,18,0.65)" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M320 232 Q324 250 322 268" stroke="rgba(68,44,18,0.6)" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- Purple/lilac claw clip -->
+  <rect x="282" y="188" width="22" height="12" rx="4" fill="rgba(158,118,188,0.85)"/>
+  <path d="M284 194 Q293 190 302 194" stroke="rgba(178,138,208,0.6)" stroke-width="1.5" fill="none"/>
+
+  <!-- FACE -->
+  <!-- Eye visible (3/4 view) -->
+  <ellipse cx="278" cy="238" rx="9" ry="7" fill="rgba(35,28,20,0.88)"/>
+  <ellipse cx="279" cy="237" rx="7" ry="6" fill="rgba(60,42,25,0.95)"/>
+  <!-- Catchlight -->
+  <ellipse cx="282" cy="235" rx="2.5" ry="2.5" fill="rgba(255,255,255,0.95)"/>
+  <ellipse cx="277" cy="238" rx="1" ry="1" fill="rgba(255,255,255,0.65)"/>
+  <!-- Second eye (far) -->
+  <ellipse cx="305" cy="236" rx="6" ry="5" fill="rgba(35,28,20,0.75)"/>
+  <ellipse cx="307" cy="234" rx="1.8" ry="1.8" fill="rgba(255,255,255,0.8)"/>
+  <!-- Eyebrows -->
+  <path d="M270 228 Q279 223 290 226" stroke="rgba(55,38,20,0.8)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M298 225 Q307 220 316 223" stroke="rgba(55,38,20,0.72)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  <!-- Nose -->
+  <path d="M280 246 Q285 253 292 250" stroke="rgba(185,145,105,0.5)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Lips -->
+  <path d="M276 260 Q284 266 293 261" stroke="rgba(180,120,105,0.8)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Freckles -->
+  <circle cx="280" cy="247" r="1" fill="rgba(165,120,80,0.38)"/>
+  <circle cx="287" cy="246" r="0.8" fill="rgba(165,120,80,0.32)"/>
+  <!-- Earring -->
+  <circle cx="258" cy="245" r="3" fill="rgba(210,180,100,0.85)"/>
+
+  <!-- MIRROR REFLECTION (faint) -->
+  <ellipse cx="420" cy="215" rx="28" ry="30" fill="rgba(216,176,136,0.22)"/>
+  <path d="M400 240 Q412 220 422 215 Q432 212 440 225" stroke="rgba(58,36,16,0.18)" stroke-width="4" fill="none" stroke-linecap="round"/>
+</g>
+
+<!-- PAPER GRAIN OVERLAY -->
+<rect width="1000" height="680" fill="rgba(242,237,228,0.06)" filter="url(#paper-grain2)"/>
+</svg>
+
+<!-- Caption bubble -->
+<div class="bubble" id="bubble3" style="bottom:32%;left:36%">
+  <em style="opacity:0.7;font-size:0.85em">opens laptop</em><br>
+  ok let me find something cute for Saturday...
+</div>
+</div>
+
+<!-- SCENE 3: Zoom overlay (iMac screen expanding) -->
+<div class="scene" id="scene-zoom" style="z-index:40;background:transparent;pointer-events:none">
+  <div id="screen-expand" style="
+    position:absolute;
+    left:35.5%; top:17.6%;
+    width:38%; height:38.2%;
+    background:#f8f5f0;
+    border-radius:4px;
+    transition: all 1.8s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 0 8px rgba(225,225,230,0.9), 0 20px 60px rgba(0,0,0,0.25);
+    overflow:hidden;
+    opacity:0;
+  ">
+    <!-- Mini browser content that expands -->
+    <div style="height:100%;display:flex;flex-direction:column">
+      <div style="height:14px;background:rgba(215,210,205,0.9);flex-shrink:0;display:flex;align-items:center;padding:0 8px;gap:4px">
+        <div style="width:7px;height:7px;border-radius:50%;background:rgba(255,100,90,0.7)"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:rgba(255,190,60,0.7)"></div>
+        <div style="width:7px;height:7px;border-radius:50%;background:rgba(80,185,80,0.7)"></div>
+      </div>
+      <div style="flex:1;background:#f8f5f0;display:flex;flex-direction:column;align-items:center;padding:8px">
+        <div style="font-family:'Bodoni Moda',serif;font-style:italic;font-size:clamp(10px,1.2vw,16px);color:#b8302a;margin-bottom:6px">Lund Select</div>
+        <div style="display:flex;gap:6px;width:100%">
+          <div style="flex:1;height:50px;background:rgba(210,198,182,0.55);border-radius:2px"></div>
+          <div style="flex:1;height:50px;background:rgba(195,188,175,0.55);border-radius:2px"></div>
+          <div style="flex:1;height:50px;background:rgba(215,205,190,0.55);border-radius:2px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 4: LOGO REVEAL -->
+<div class="scene" id="scene-logo">
+  <!-- Background rule lines -->
+  <div class="rule-line" id="rule1" style="top:33.3%"></div>
+  <div class="rule-line" id="rule2" style="top:66.6%"></div>
+  <!-- Corner marks -->
+  <div class="corner-mark tl" id="cm-tl">✦</div>
+  <div class="corner-mark tr" id="cm-tr">✦</div>
+  <div class="corner-mark bl" id="cm-bl">✦</div>
+  <div class="corner-mark br" id="cm-br">✦</div>
+  <!-- Dashed border -->
+  <div id="dashed-border"></div>
+  <!-- Paper grain on logo screen -->
+  <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.04" xmlns="http://www.w3.org/2000/svg">
+    <filter id="logo-grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+    <rect width="100%" height="100%" filter="url(#logo-grain)" opacity="1"/>
+  </svg>
+
+  <div id="logo-wrap">
+    <span id="logo-lund">LUND</span>
+    <span id="logo-select">Select</span>
+    <div id="logo-line"></div>
+    <div id="logo-tagline">curated brazilian fashion</div>
+  </div>
+</div>
+
+</div><!-- end stage -->
+
+<!-- PROGRESS BAR -->
+<div id="progress"></div>
+<!-- SKIP BUTTON -->
+<div id="skip" onclick="skipToLogo()">skip intro</div>
+
+<script>
+// =====================
+// TIMING ENGINE
+// =====================
+const TOTAL_DURATION = 20000; // 20s
+let startTime = null;
+let animFrame = null;
+let skipped = false;
+
+const scenes = {
+  bedroom: document.getElementById('scene-bedroom'),
+  vanity: document.getElementById('scene-vanity'),
+  zoom: document.getElementById('scene-zoom'),
+  logo: document.getElementById('scene-logo'),
+};
+
+const bubble1 = document.getElementById('bubble1');
+const bubble2 = document.getElementById('bubble2');
+const bubble3 = document.getElementById('bubble3');
+const screenExpand = document.getElementById('screen-expand');
+const progress = document.getElementById('progress');
+const skip = document.getElementById('skip');
+
+let state = {
+  b1: false, b2: false, b3: false,
+  vanity: false, zoom: false, logo: false,
+  zoomStarted: false, logoStarted: false,
+};
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function tick(now) {
+  if (!startTime) startTime = now;
+  const t = now - startTime;
+  const pct = clamp(t / TOTAL_DURATION, 0, 1);
+
+  // Progress bar
+  progress.style.width = (pct * 100) + '%';
+
+  // Show skip after 2.5s
+  if (t > 2500 && !skip._shown) {
+    skip.style.opacity = '1';
+    skip._shown = true;
+  }
+
+  // BUBBLE 1: 1.2s
+  if (t > 1200 && !state.b1) {
+    state.b1 = true;
+    bubble1.classList.add('show');
+  }
+
+  // BUBBLE 2: 2.8s
+  if (t > 2800 && !state.b2) {
+    state.b2 = true;
+    bubble2.classList.add('show');
+  }
+
+  // VANITY: 5.5s
+  if (t > 5500 && !state.vanity) {
+    state.vanity = true;
+    scenes.bedroom.classList.remove('active');
+    scenes.vanity.classList.add('active');
+  }
+
+  // BUBBLE 3: 7s
+  if (t > 7000 && !state.b3) {
+    state.b3 = true;
+    bubble3.classList.add('show');
+  }
+
+  // ZOOM INIT: 11s — show zoom scene and start expanding
+  if (t > 11000 && !state.zoomStarted) {
+    state.zoomStarted = true;
+    scenes.zoom.classList.add('active');
+    scenes.zoom.style.opacity = '1';
+    // Start the screen expansion
+    setTimeout(() => {
+      screenExpand.style.opacity = '1';
+      // After a brief moment, animate to full screen
+      setTimeout(() => {
+        screenExpand.style.left = '0';
+        screenExpand.style.top = '0';
+        screenExpand.style.width = '100%';
+        screenExpand.style.height = '100%';
+        screenExpand.style.borderRadius = '0';
+        screenExpand.style.boxShadow = 'none';
+        // Fade out vanity behind
+        scenes.vanity.style.opacity = '0';
+      }, 200);
+    }, 100);
+  }
+
+  // LOGO: 14.8s
+  if (t > 14800 && !state.logoStarted) {
+    state.logoStarted = true;
+    startLogoReveal();
+  }
+
+  if (pct < 1) {
+    animFrame = requestAnimationFrame(tick);
+  } else {
+    progress.style.width = '100%';
+  }
+}
+
+function startLogoReveal() {
+  // Fade out zoom scene, show logo
+  scenes.zoom.style.opacity = '0';
+  screenExpand.style.opacity = '0';
+  setTimeout(() => { scenes.zoom.classList.remove('active'); }, 800);
+  scenes.logo.style.opacity = '';
+  scenes.logo.classList.add('active');
+
+  // Animate LUND letters
+  const lund = document.getElementById('logo-lund');
+  const sel = document.getElementById('logo-select');
+  const line = document.getElementById('logo-line');
+  const tagline = document.getElementById('logo-tagline');
+  const border = document.getElementById('dashed-border');
+  const rules = document.querySelectorAll('.rule-line');
+  const corners = document.querySelectorAll('.corner-mark');
+
+  // LUND appears with fade + rise per letter using CSS
+  lund.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+  lund.style.transform = 'translateY(20px)';
+
+  // Staggered letter reveal using clip/opacity trick with spans
+  lund.innerHTML = 'LUND'.split('').map((l,i) =>
+    `<span style="display:inline-block;opacity:0;transform:translateY(15px);transition:opacity 0.4s ${0.15+i*0.28}s ease,transform 0.4s ${0.15+i*0.28}s ease">${l}</span>`
+  ).join('');
+  lund.style.opacity = '1';
+  lund.style.transform = 'none';
+  lund.style.transition = 'none';
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    lund.querySelectorAll('span').forEach(s => {
+      s.style.opacity = '1';
+      s.style.transform = 'translateY(0)';
+    });
+  }));
+
+  // SELECT at 1.6s after logo start
+  setTimeout(() => {
+    sel.innerHTML = 'Select'.split('').map((l,i) =>
+      `<span style="display:inline-block;opacity:0;transform:translateY(12px);transition:opacity 0.4s ${i*0.12}s ease,transform 0.4s ${i*0.12}s ease">${l}</span>`
+    ).join('');
+    sel.style.opacity = '1';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      sel.querySelectorAll('span').forEach(s => {
+        s.style.opacity = '1';
+        s.style.transform = 'translateY(0)';
+      });
+    }));
+  }, 1600);
+
+  // Decorative line: 2.4s
+  setTimeout(() => { line.style.opacity = '1'; }, 2400);
+
+  // Tagline: 3s
+  setTimeout(() => { tagline.style.opacity = '1'; }, 3000);
+
+  // Corner marks + border: 3.7s
+  setTimeout(() => {
+    corners.forEach(c => c.style.opacity = '1');
+    border.style.opacity = '1';
+    rules.forEach(r => r.style.opacity = '1');
+  }, 3700);
+}
+
+function skipToLogo() {
+  if (skipped) return;
+  skipped = true;
+  cancelAnimationFrame(animFrame);
+  progress.style.width = '100%';
+  skip.style.opacity = '0';
+
+  // Hide all non-logo scenes
+  ['bedroom','vanity','zoom'].forEach(k => {
+    scenes[k].classList.remove('active');
+    scenes[k].style.transition = 'none';
+    scenes[k].style.opacity = '0';
+  });
+
+  // Show logo — clear any inline opacity so CSS class opacity:1 applies
+  scenes.logo.style.transition = 'opacity 0.6s ease';
+  scenes.logo.style.opacity = '';
+  scenes.logo.classList.add('active');
+
+  setTimeout(startLogoReveal, 100);
+}
+
+// Start animation
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

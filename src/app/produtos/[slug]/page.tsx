@@ -1,10 +1,13 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Metadata } from 'next'
 import { getProductBySlug, getProducts } from '@/lib/queries'
 import { products } from '@/lib/data'
 import ProductActions from './ProductActions'
+import ProductCard from '@/components/ui/ProductCard'
+import ProductImageViewer from './ProductImageViewer'
+import RecentlyViewedSection from '@/components/ui/RecentlyViewedSection'
+import RecommendedSizeBadge from '@/components/pdp/RecommendedSizeBadge'
 
 interface Props {
   params: { slug: string }
@@ -13,13 +16,23 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductBySlug(params.slug)
   if (!product) return { title: 'Produto não encontrado — Lund Select' }
+  const canonical = `https://lundselect.com.br/produtos/${product.slug}`
   return {
     title: `${product.name} — ${product.brand} | Lund Select`,
     description: product.description || `${product.name} por ${product.brand}`,
+    alternates: { canonical },
     openGraph: {
       title: `${product.name} — ${product.brand}`,
       description: product.description || `${product.name} por ${product.brand}`,
+      url: canonical,
       type: 'website',
+      ...(product.image ? { images: [{ url: product.image, alt: product.name }] } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${product.name} — ${product.brand}`,
+      description: product.description || `${product.name} por ${product.brand}`,
+      ...(product.image ? { images: [product.image] } : {}),
     },
   }
 }
@@ -39,8 +52,37 @@ export default async function ProductDetailPage({ params }: Props) {
     .filter((p) => p.slug !== product.slug && p.category === product.category)
     .slice(0, 4)
 
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    brand: { '@type': 'Brand', name: product.brand },
+    description: product.description || `${product.name} por ${product.brand}`,
+    image: product.image ?? undefined,
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'BRL',
+      price: product.price,
+      availability: product.inStock === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      url: `https://lundselect.com.br/produtos/${product.slug}`,
+    },
+  }
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://lundselect.com.br' },
+      { '@type': 'ListItem', position: 2, name: 'Produtos', item: 'https://lundselect.com.br/produtos' },
+      { '@type': 'ListItem', position: 3, name: product.brand, item: `https://lundselect.com.br/marcas/${product.brandSlug}` },
+      { '@type': 'ListItem', position: 4, name: product.name, item: `https://lundselect.com.br/produtos/${product.slug}` },
+    ],
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs text-offwhite/30 mb-12">
         <Link href="/" className="hover:text-gold transition-colors">Início</Link>
@@ -53,33 +95,8 @@ export default async function ProductDetailPage({ params }: Props) {
       </nav>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
-        {/* Image */}
-        <div className="relative aspect-[3/4] bg-offwhite/5 border border-gold/10 overflow-hidden">
-          {product.image ? (
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-gold/20 text-sm tracking-widest uppercase">{product.brand}</span>
-            </div>
-          )}
-          {product.isNew && product.inStock !== false && (
-            <span className="absolute top-4 left-4 bg-gold text-primary text-[9px] tracking-widest uppercase px-2 py-1 z-10">
-              Novidade
-            </span>
-          )}
-          {product.inStock === false && (
-            <div className="absolute inset-0 bg-primary/60 flex items-center justify-center z-10">
-              <span className="text-offwhite/50 text-xs tracking-widest uppercase border border-offwhite/20 px-4 py-2">Esgotado</span>
-            </div>
-          )}
-        </div>
+        {/* Image with zoom + view tracking */}
+        <ProductImageViewer product={product} />
 
         {/* Info */}
         <div className="flex flex-col justify-center">
@@ -102,6 +119,7 @@ export default async function ProductDetailPage({ params }: Props) {
             R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
 
+          <RecommendedSizeBadge product={product} />
           <ProductActions product={product} />
 
           <div className="mt-10 pt-10 border-t border-gold/10 space-y-3">
@@ -125,18 +143,14 @@ export default async function ProductDetailPage({ params }: Props) {
           <h2 className="text-offwhite text-xl font-light tracking-wide mb-10">Você também pode gostar</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-10">
             {related.map((p) => (
-              <Link key={p.id} href={`/produtos/${p.slug}`} className="group">
-                <div className="aspect-[3/4] bg-offwhite/5 border border-gold/10 flex items-center justify-center mb-3 relative overflow-hidden">
-                  <span className="text-gold/15 text-xs">{p.brand}</span>
-                  <div className="absolute inset-0 bg-gold/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <p className="text-offwhite/40 text-xs uppercase tracking-wider mb-1">{p.brand}</p>
-                <p className="text-offwhite text-sm group-hover:text-gold transition-colors">{p.name}</p>
-              </Link>
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </div>
       )}
+
+      {/* Recently viewed */}
+      <RecentlyViewedSection excludeId={product.id} />
     </div>
   )
 }

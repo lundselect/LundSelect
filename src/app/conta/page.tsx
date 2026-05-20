@@ -187,10 +187,10 @@ interface Order {
 }
 
 const quickLinks = [
+  { label: 'Meus tamanhos', icon: '📐', section: null, modal: null, href: '/conta/tamanhos' },
   { label: 'Ajuda', icon: '💬', section: null, modal: null, href: '/ajuda' },
   { label: 'Trocar senha', icon: '🔑', section: null, modal: null, href: '/trocar-senha' },
   { label: 'Avaliar site', icon: '★', section: null, modal: 'rate' },
-  { label: 'Sugerir melhoria', icon: '💡', section: null, modal: 'feedback' },
 ]
 
 const accountSections = [

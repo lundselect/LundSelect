@@ -179,6 +179,11 @@ export default function LoginPage() {
               >
                 {loading ? 'Entrando...' : 'Entrar'}
               </button>
+              <p className="text-center">
+                <Link href="/trocar-senha" className="text-offwhite/30 text-xs hover:text-offwhite transition-colors">
+                  Esqueceu a senha?
+                </Link>
+              </p>
             </form>
           </div>
         )}

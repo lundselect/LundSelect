@@ -41,15 +41,13 @@ interface Paths {
 }
 
 function buildSilhouette(
-  bust: number, waist: number, hip: number,
-  heightCm: number, inseamCm: number,
+  bust: number, waist: number, hip: number, heightCm: number,
 ): Paths {
   const cx   = 100
   const b    = clamp(bust,     76, 120)
   const w    = clamp(waist,    58, 104)
   const h    = clamp(hip,      84, 128)
   const hc   = clamp(heightCm, 145, 185)
-  const ins  = clamp(inseamCm, 60,  90)
 
   // Half-widths — tuned so reference (92/74/99) looks natural in a 200px-wide viewBox
   const bHW  = r1(b * 0.435)   // 92→40
@@ -144,8 +142,8 @@ interface AvatarProps {
 
 function BodyAvatar({ bust, waist, hip, height, inseam, hasData }: AvatarProps) {
   const p  = useMemo(
-    () => buildSilhouette(bust, waist, hip, height, inseam),
-    [bust, waist, hip, height, inseam]
+    () => buildSilhouette(bust, waist, hip, height),
+    [bust, waist, hip, height]
   )
   const T  = { transition: 'd 0.4s cubic-bezier(0.34,1.1,0.64,1)' } as React.CSSProperties
   const f  = 'rgba(210,180,140,0.10)'

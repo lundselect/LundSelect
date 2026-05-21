@@ -44,8 +44,15 @@ export default function SizeGuideFlow() {
   const [savedProfile, setSavedProfile] = useState<SizeProfile | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const handleMeasurementsDone = (measurements: Partial<Measurements>) => {
-    setState(s => ({ ...s, measurements }))
+  const handleMeasurementsDone = (
+    measurements: Partial<Measurements>,
+    shapeAnswers?: Partial<ShapeAnswers>
+  ) => {
+    setState(s => ({
+      ...s,
+      measurements,
+      shapeAnswers: shapeAnswers ? { ...s.shapeAnswers, ...shapeAnswers } : s.shapeAnswers,
+    }))
     setStep('scan')
   }
 

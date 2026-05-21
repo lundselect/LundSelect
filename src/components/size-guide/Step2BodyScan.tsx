@@ -771,13 +771,6 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
             {/* Body position guide overlay */}
             <BodyGuideOverlay />
 
-            {/* Phase label top */}
-            <div className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none">
-              <div className="bg-black/65 px-5 py-2 text-center">
-                <p className="text-offwhite text-sm tracking-[0.2em] uppercase font-light">Foto de Frente</p>
-                <p className="text-offwhite/40 text-xs mt-0.5">Corpo inteiro · fique de pé</p>
-              </div>
-            </div>
 
             {/* Countdown overlay */}
             {isCounting && (

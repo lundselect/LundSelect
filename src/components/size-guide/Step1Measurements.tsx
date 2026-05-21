@@ -69,7 +69,6 @@ function buildSilhouette(
 
   const legScale = hc / 162
   const legLen   = r1(190 * legScale)
-  const inseamLen= r1(ins * (legLen / 76))   // scale inseam to SVG
   const ankleY   = r1(crY + legLen)
   const kneeY    = r1(crY + legLen * 0.52)
 

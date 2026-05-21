@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { Measurements, ShapeAnswers } from '@/lib/size-guide/types'
 
 // ── MediaPipe landmark indices ──────────────────────────────────────────────
@@ -159,6 +159,94 @@ function drawSkeleton(canvas: HTMLCanvasElement, imgEl: HTMLImageElement, lm: La
   })
 }
 
+// ── Camera body-position guide overlay ────────────────────────────────────
+function BodyGuideOverlay() {
+  const s = 'rgba(255,255,255,0.26)'  // silhouette stroke
+  const f = 'rgba(255,255,255,0.04)'  // silhouette fill
+  const g = 'rgba(212,175,90,0.72)'   // gold measurement lines
+  const t = 'rgba(90,190,140,0.72)'   // teal waist line
+  const c = 'rgba(255,255,255,0.42)'  // corner brackets
+
+  return (
+    <svg
+      viewBox="0 0 200 520"
+      fill="none"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      {/* Corner framing brackets */}
+      <path d="M 12,16 L 12,52 M 12,16 L 48,16" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M 188,16 L 188,52 M 188,16 L 152,16" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M 12,504 L 12,468 M 12,504 L 48,504" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M 188,504 L 188,468 M 188,504 L 152,504" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+
+      {/* Head */}
+      <ellipse cx="100" cy="36" rx="19" ry="24" stroke={s} strokeWidth="1.3" fill={f} />
+      {/* Neck */}
+      <rect x="93" y="58" width="14" height="10" fill={f} />
+
+      {/* Body torso — smooth S-curve silhouette */}
+      <path stroke={s} strokeWidth="1.3" fill={f} d={[
+        'M 107,58',
+        'C 120,64 134,70 136,80',
+        'C 138,90 138,102 136,112',
+        'C 134,124 124,158 120,178',
+        'C 116,198 138,214 140,226',
+        'C 142,238 122,252 112,252',
+        'L 88,252',
+        'C 78,252 58,238 60,226',
+        'C 62,214 84,198 80,178',
+        'C 76,158 66,124 64,112',
+        'C 62,102 62,90 64,80',
+        'C 66,70 80,64 93,58 Z',
+      ].join(' ')} />
+
+      {/* Arms — thick open stroke so they look like real arms */}
+      <path stroke={s} strokeWidth="9" strokeLinecap="round" fill="none"
+        d="M 134,80 C 152,96 162,155 156,226" />
+      <path stroke={s} strokeWidth="9" strokeLinecap="round" fill="none"
+        d="M 66,80 C 48,96 38,155 44,226" />
+
+      {/* Legs */}
+      <path stroke={s} strokeWidth="1.3" fill={f} d={[
+        'M 112,252 C 115,268 117,300 115,375',
+        'C 113,415 113,445 113,474',
+        'L 103,474 C 103,445 103,415 103,375',
+        'C 103,300 103,268 103,252 Z',
+      ].join(' ')} />
+      <path stroke={s} strokeWidth="1.3" fill={f} d={[
+        'M 88,252 C 85,268 83,300 85,375',
+        'C 87,415 87,445 87,474',
+        'L 97,474 C 97,445 97,415 97,375',
+        'C 97,300 97,268 97,252 Z',
+      ].join(' ')} />
+
+      {/* ── Measurement guide lines ── */}
+      {/* Bust */}
+      <line x1="64" y1="112" x2="136" y2="112" stroke={g} strokeWidth="1.1" strokeDasharray="4 2.5" />
+      <line x1="64" y1="107" x2="64" y2="117" stroke={g} strokeWidth="1.3" />
+      <line x1="136" y1="107" x2="136" y2="117" stroke={g} strokeWidth="1.3" />
+      <text x="140" y="116" fill={g} fontSize="9" fontFamily="system-ui,sans-serif">busto</text>
+
+      {/* Waist */}
+      <line x1="80" y1="178" x2="120" y2="178" stroke={t} strokeWidth="1.1" strokeDasharray="4 2.5" />
+      <line x1="80" y1="173" x2="80" y2="183" stroke={t} strokeWidth="1.3" />
+      <line x1="120" y1="173" x2="120" y2="183" stroke={t} strokeWidth="1.3" />
+      <text x="124" y="182" fill={t} fontSize="9" fontFamily="system-ui,sans-serif">cintura</text>
+
+      {/* Hip */}
+      <line x1="60" y1="226" x2="140" y2="226" stroke={g} strokeWidth="1.1" strokeDasharray="4 2.5" />
+      <line x1="60" y1="221" x2="60" y2="231" stroke={g} strokeWidth="1.3" />
+      <line x1="140" y1="221" x2="140" y2="231" stroke={g} strokeWidth="1.3" />
+      <text x="144" y="230" fill={g} fontSize="9" fontFamily="system-ui,sans-serif">quadril</text>
+
+      {/* Position hints */}
+      <text x="100" y="14" textAnchor="middle" fill="rgba(255,255,255,0.28)" fontSize="8.5" fontFamily="system-ui">cabeça aqui</text>
+      <text x="100" y="497" textAnchor="middle" fill="rgba(255,255,255,0.28)" fontSize="8.5" fontFamily="system-ui">pés aqui</text>
+    </svg>
+  )
+}
+
 const SHAPE_LABEL: Record<string, string> = {
   balanced:    'Proporcional',
   fuller_bust: 'Busto mais cheio',
@@ -258,10 +346,8 @@ interface Props {
 
 type Status =
   | 'idle'
-  | 'camera_front'
-  | 'countdown_front'
-  | 'camera_back'
-  | 'countdown_back'
+  | 'camera'
+  | 'countdown'
   | 'loading'
   | 'analyzing'
   | 'result'
@@ -270,7 +356,7 @@ type Status =
 type AnalysisResult = ReturnType<typeof analyzeBody>
 
 export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip }: Props) {
-  const videoRef       = useRef<HTMLVideoElement>(null)
+  const videoRef       = useRef<HTMLVideoElement | null>(null)
   const canvasRef      = useRef<HTMLCanvasElement>(null)
   const captureRef     = useRef<HTMLCanvasElement>(null)
   const streamRef      = useRef<MediaStream | null>(null)
@@ -285,7 +371,8 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
   const [countdown, setCountdown] = useState(3)
   const [result,    setResult]    = useState<AnalysisResult | null>(null)
   const [errorMsg,  setErrorMsg]  = useState('')
-  const [consented, setConsented] = useState(false)
+  const [consentedNudity,  setConsentedNudity]  = useState(false)
+  const [consentedPrivacy, setConsentedPrivacy] = useState(false)
 
   const heightCm    = parseInt(heightInput)
   const heightValid = !isNaN(heightCm) && heightCm >= 140 && heightCm <= 220
@@ -306,11 +393,18 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
   const captureFrame = (): string | null => {
     const video = videoRef.current
     const canvas = captureRef.current
-    if (!video || !canvas || video.readyState < 2) return null
-    canvas.width  = video.videoWidth
-    canvas.height = video.videoHeight
-    canvas.getContext('2d')!.drawImage(video, 0, 0)
-    return canvas.toDataURL('image/jpeg', 0.92)
+    if (!video || !canvas) return null
+    // videoWidth/Height are 0 until the stream has at least one frame
+    const w = video.videoWidth || 1280
+    const h = video.videoHeight || 720
+    canvas.width  = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return null
+    ctx.drawImage(video, 0, 0, w, h)
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
+    // A blank/failed canvas gives a very short data URL — reject it
+    return dataUrl.length > 5000 ? dataUrl : null
   }
 
   const runAnalysis = async (dataUrl: string, hCm: number) => {
@@ -343,26 +437,33 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
     }
   }
 
+  // Ref callback — fires the instant <video> mounts, stream is already in streamRef
+  const attachVideoRef = useCallback((node: HTMLVideoElement | null) => {
+    videoRef.current = node
+    if (node && streamRef.current) {
+      node.srcObject = streamRef.current
+      node.play().catch(() => {})
+    }
+  }, [])
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { width: { ideal: 1280 }, height: { ideal: 720 } },
       })
       streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        videoRef.current.play()
-      }
-      setStatus('camera_front')
+      // Set status first so React renders the <video> element,
+      // then the useEffect above attaches the stream
+      setStatus('camera')
     } catch {
       setErrorMsg('Não foi possível acessar a câmera. Verifique as permissões do navegador e tente novamente, ou use a galeria.')
       setStatus('error')
     }
   }
 
-  const beginCountdown = (phase: 'front' | 'back') => {
+  const beginCountdown = () => {
     const capturedHeight = heightCm
-    setStatus(phase === 'front' ? 'countdown_front' : 'countdown_back')
+    setStatus('countdown')
     setCountdown(3)
 
     let count = 3
@@ -374,20 +475,13 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
         clearInterval(timerRef.current!)
         timerRef.current = null
         const dataUrl = captureFrame()
+        stopCamera()
 
-        if (phase === 'front') {
-          frontPhotoRef.current = dataUrl
-          setCountdown(3)
-          setStatus('camera_back')
+        if (dataUrl) {
+          runAnalysis(dataUrl, capturedHeight)
         } else {
-          stopCamera()
-          const front = frontPhotoRef.current
-          if (front) {
-            runAnalysis(front, capturedHeight)
-          } else {
-            setErrorMsg('Erro ao capturar a foto. Tente novamente.')
-            setStatus('error')
-          }
+          setErrorMsg('Não foi possível capturar a imagem. Verifique a iluminação e tente novamente.')
+          setStatus('error')
         }
       }
     }, 1000)
@@ -427,11 +521,8 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
     onComplete(shapeAnswers, measurements)
   }
 
-  const isCameraActive =
-    status === 'camera_front' || status === 'countdown_front' ||
-    status === 'camera_back'  || status === 'countdown_back'
-
-  const isCounting = status === 'countdown_front' || status === 'countdown_back'
+  const isCameraActive = status === 'camera' || status === 'countdown'
+  const isCounting     = status === 'countdown'
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (
@@ -472,84 +563,140 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
       {/* ── Privacy & consent (idle only) ── */}
       {status === 'idle' && (
         <>
-          {/* Strict nudity / clothing policy */}
-          <div className="border border-red-500/30 bg-red-500/5 p-4 mb-4">
-            <p className="text-red-400/90 text-xs font-semibold tracking-wide uppercase mb-3">
-              Conteúdo permitido — leia antes de continuar
+          {/* ── NUDITY PROHIBITION — hard block ── */}
+          <div className="border-2 border-red-500/60 bg-red-500/8 p-4 mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-red-400 text-base font-bold leading-none">✕</span>
+              <p className="text-red-400 text-xs font-bold tracking-widest uppercase">
+                Nudez estritamente proibida
+              </p>
+            </div>
+
+            <p className="text-red-300/80 text-xs leading-relaxed mb-3 font-medium">
+              Esta funcionalidade <span className="underline underline-offset-2">não aceita, não processa e não tolera</span> imagens
+              com qualquer grau de nudez ou exposição corporal inadequada.
+              A proibição é absoluta e não admite exceções.
             </p>
-            <p className="text-offwhite/50 text-xs leading-relaxed mb-3">
-              Esta ferramenta destina-se exclusivamente à análise de proporções corporais para fins de
-              recomendação de tamanho. O uso é restrito a imagens de corpo inteiro com roupas adequadas.
-            </p>
-            <ul className="space-y-2 mb-3">
+
+            <div className="bg-red-500/10 border border-red-500/25 p-3 mb-3 space-y-2">
+              <p className="text-red-400/70 text-[10px] tracking-widest uppercase font-semibold mb-1.5">
+                Especificamente proibido — sem exceção:
+              </p>
               {[
-                { label: 'Permitido', text: 'Roupas justas — leggings, top esportivo, collant, roupa de ginástica', ok: true },
-                { label: 'Reduz precisão', text: 'Roupas largas, casacos volumosos ou vestidos amplos', ok: null },
-                { label: 'Estritamente proibido', text: 'Nudez total ou parcial, lingerie, roupas de banho ou qualquer roupa de baixo — independentemente do grau de exposição', ok: false },
-              ].map(({ label, text, ok }) => (
-                <li key={label} className="flex items-start gap-2.5">
-                  <span className={`text-xs mt-0.5 flex-shrink-0 font-bold ${ok === true ? 'text-emerald-400/70' : ok === false ? 'text-red-400' : 'text-amber-400/60'}`}>
-                    {ok === true ? '✓' : ok === false ? '✕' : '!'}
-                  </span>
-                  <span>
-                    <span className={`text-xs font-medium mr-1 ${ok === true ? 'text-emerald-400/70' : ok === false ? 'text-red-400/80' : 'text-amber-400/60'}`}>
-                      {label}:
-                    </span>
-                    <span className="text-offwhite/35 text-xs leading-relaxed">{text}</span>
-                  </span>
-                </li>
+                'Nudez total — sem nenhuma roupa',
+                'Nudez parcial — torso, seios, genitais ou glúteos expostos, mesmo que parcialmente',
+                'Lingerie, calcinha, cueca, sutiã ou qualquer peça íntima',
+                'Biquíni, maiô ou roupa de banho de qualquer tipo',
+                'Roupas transparentes, translúcidas ou que deixem a pele visível por baixo',
+                'Qualquer imagem de menor de 18 anos sem roupa adequada',
+              ].map(item => (
+                <div key={item} className="flex items-start gap-2">
+                  <span className="text-red-400 text-xs flex-shrink-0 font-bold mt-0.5">✕</span>
+                  <p className="text-red-300/65 text-xs leading-relaxed">{item}</p>
+                </div>
               ))}
-            </ul>
-            <p className="text-offwhite/30 text-xs leading-relaxed border-t border-red-500/15 pt-3">
-              O envio de imagens com nudez ou conteúdo inapropriado é de responsabilidade exclusiva do
-              usuário e pode caracterizar infração nos termos da legislação vigente no Brasil (ECA, Lei
-              13.718/2018) e em outras jurisdições. A Lund Select não tolera, armazena nem compartilha
-              qualquer conteúdo dessa natureza.
+            </div>
+
+            <div className="bg-emerald-500/8 border border-emerald-500/20 p-3 mb-3 space-y-1.5">
+              <p className="text-emerald-400/70 text-[10px] tracking-widest uppercase font-semibold mb-1.5">
+                Aceito:
+              </p>
+              {[
+                'Leggings, calça justa, collant ou lycra — roupa cobrindo pernas e quadril',
+                'Top esportivo ou camiseta justa — cobrindo o torso completamente',
+                'Roupa de ginástica, yoga ou dança — desde que sem exposição',
+              ].map(item => (
+                <div key={item} className="flex items-start gap-2">
+                  <span className="text-emerald-400/70 text-xs flex-shrink-0 font-semibold mt-0.5">✓</span>
+                  <p className="text-emerald-300/55 text-xs leading-relaxed">{item}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-red-500/20 pt-3 space-y-1.5">
+              <p className="text-red-300/60 text-[10px] leading-relaxed">
+                <span className="font-semibold">Consequências legais:</span> O envio de imagens com nudez constitui
+                violação dos Termos de Uso e pode configurar crime conforme o <span className="font-medium">ECA (Lei 8.069/1990)</span>,
+                a <span className="font-medium">Lei 13.718/2018</span> (divulgação de cena de nudez sem consentimento)
+                e o <span className="font-medium">Marco Civil da Internet (Lei 12.965/2014)</span>.
+                Infratores serão reportados às autoridades competentes.
+              </p>
+              <p className="text-red-300/50 text-[10px] leading-relaxed">
+                A Lund Select não armazena, não visualiza e não compartilha nenhuma imagem capturada.
+                Todo o processamento ocorre exclusivamente no seu dispositivo e a imagem é apagada imediatamente após a análise.
+                Ainda assim, o envio de conteúdo proibido é de inteira responsabilidade do usuário.
+              </p>
+            </div>
+          </div>
+
+          {/* ── Checkbox 1: Nudity acknowledgment (separate, prominent) ── */}
+          <div
+            onClick={() => setConsentedNudity(v => !v)}
+            className={`flex items-start gap-3 cursor-pointer p-3 mb-3 border transition-colors ${
+              consentedNudity
+                ? 'border-red-500/40 bg-red-500/8'
+                : 'border-red-500/20 bg-red-500/4 hover:border-red-500/35'
+            }`}
+          >
+            <div className={`mt-0.5 w-4 h-4 flex-shrink-0 border-2 flex items-center justify-center transition-colors ${
+              consentedNudity ? 'border-red-400 bg-red-500/80' : 'border-red-500/40'
+            }`}>
+              {consentedNudity && <span className="text-white text-xs leading-none font-bold">✓</span>}
+            </div>
+            <p className="text-offwhite/55 text-xs leading-relaxed">
+              <span className="text-red-400/80 font-semibold">Confirmo expressamente</span> que estou ciente
+              da proibição absoluta de nudez, que tenho 18 anos ou mais, que a imagem que enviarei mostra
+              meu corpo completamente vestido com roupas adequadas e que nenhuma parte íntima estará exposta.
+              Entendo que o descumprimento pode ter consequências legais.
             </p>
           </div>
 
-          {/* How the photo is processed */}
-          <div className="border border-gold/10 bg-gold/5 p-4 mb-4">
+          {/* ── How the photo is processed ── */}
+          <div className="border border-gold/10 bg-gold/5 p-4 mb-3">
             <p className="text-gold/70 text-xs font-medium tracking-wide uppercase mb-3">
               Como sua foto é tratada
             </p>
-            <ol className="space-y-2.5 list-none">
+            <ol className="space-y-2 list-none">
               {[
-                { n: '1', text: 'A câmera captura a imagem diretamente no seu dispositivo.' },
-                { n: '2', text: 'O modelo de análise (MediaPipe) lê apenas as proporções do corpo — ombros, quadril, tornozelos — e gera as medidas estimadas.' },
-                { n: '3', text: 'Imediatamente após a análise, a imagem é removida da memória do navegador. Nenhuma cópia é salva no dispositivo, em nuvem ou em qualquer servidor.' },
-                { n: '4', text: 'Apenas os dados de medida resultantes (ex.: estimativa de tamanho) são armazenados no seu perfil, sem qualquer vinculação à imagem original.' },
-              ].map(({ n, text }) => (
-                <li key={n} className="flex items-start gap-2.5">
-                  <span className="text-gold/40 text-xs font-medium flex-shrink-0 mt-0.5">{n}.</span>
+                'A câmera captura a imagem diretamente no seu dispositivo — nada é transmitido.',
+                'O MediaPipe lê apenas proporções (ombros, quadril, tornozelos) e gera as medidas estimadas.',
+                'A imagem é apagada da memória do navegador imediatamente após a análise. Nenhuma cópia é salva.',
+                'Apenas as medidas estimadas (ex.: tamanho M) são guardadas no seu perfil, sem vínculo com a imagem.',
+              ].map((text, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <span className="text-gold/40 text-xs font-medium flex-shrink-0 mt-0.5">{i + 1}.</span>
                   <p className="text-offwhite/40 text-xs leading-relaxed">{text}</p>
                 </li>
               ))}
             </ol>
           </div>
 
-          {/* Consent — explicit, affirmative */}
-          <label className="flex items-start gap-3 cursor-pointer mb-5 group">
-            <div
-              onClick={() => setConsented(v => !v)}
-              className={`mt-0.5 w-4 h-4 flex-shrink-0 border flex items-center justify-center transition-colors ${
-                consented ? 'border-gold bg-gold' : 'border-gold/30 group-hover:border-gold/50'
-              }`}
-            >
-              {consented && <span className="text-primary text-xs leading-none">✓</span>}
+          {/* ── Checkbox 2: Privacy consent ── */}
+          <div
+            onClick={() => setConsentedPrivacy(v => !v)}
+            className={`flex items-start gap-3 cursor-pointer p-3 mb-4 border transition-colors ${
+              consentedPrivacy
+                ? 'border-gold/40 bg-gold/8'
+                : 'border-gold/15 hover:border-gold/30'
+            }`}
+          >
+            <div className={`mt-0.5 w-4 h-4 flex-shrink-0 border flex items-center justify-center transition-colors ${
+              consentedPrivacy ? 'border-gold bg-gold' : 'border-gold/30'
+            }`}>
+              {consentedPrivacy && <span className="text-primary text-xs leading-none font-bold">✓</span>}
             </div>
-            <span onClick={() => setConsented(v => !v)} className="text-offwhite/40 text-xs leading-relaxed">
-              Li e concordo com as condições acima. Confirmo que usarei roupas adequadas, que não enviarei
-              imagens com nudez ou conteúdo inapropriado, e que estou ciente de que a imagem será processada
-              exclusivamente no meu dispositivo e apagada imediatamente após a análise.
-            </span>
-          </label>
+            <p className="text-offwhite/45 text-xs leading-relaxed">
+              Li e aceito o tratamento da imagem descrito acima. Entendo que o processamento ocorre
+              exclusivamente no meu dispositivo e que nenhuma imagem é armazenada ou transmitida.
+            </p>
+          </div>
 
+          {/* Tips */}
           <div className="border border-gold/10 p-4 mb-5 space-y-1.5">
             <p className="text-gold/50 text-xs tracking-widest uppercase mb-2">Para melhor resultado</p>
             {[
               'Foto de corpo inteiro, de pé e de frente',
-              'Roupas justas ou leves — evite casacos volumosos',
+              'Roupas justas — leggings + top esportivo é o ideal',
               'Boa iluminação e fundo neutro',
               'Câmera na altura do peito ou em um suporte',
             ].map(tip => (
@@ -576,7 +723,7 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
         <div className="space-y-3">
           <button
             type="button"
-            disabled={!heightValid || !consented}
+            disabled={!heightValid || !consentedNudity || !consentedPrivacy}
             onClick={startCamera}
             className="w-full bg-gold text-primary py-3.5 text-xs tracking-[0.2em] uppercase hover:bg-gold/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
@@ -584,15 +731,17 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
           </button>
           <button
             type="button"
-            disabled={!heightValid || !consented}
+            disabled={!heightValid || !consentedNudity || !consentedPrivacy}
             onClick={() => fileInputRef.current?.click()}
             className="w-full border border-gold/30 text-gold py-3.5 text-xs tracking-[0.2em] uppercase hover:bg-gold/5 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Escolher da galeria
           </button>
-          {(!heightValid || !consented) && (
+          {(!heightValid || !consentedNudity || !consentedPrivacy) && (
             <p className="text-offwhite/25 text-xs text-center">
-              {!heightValid ? 'Digite sua altura acima para habilitar o scan' : 'Confirme o aviso acima para continuar'}
+              {!heightValid
+                ? 'Digite sua altura acima para habilitar o scan'
+                : 'Confirme os dois termos acima para continuar'}
             </p>
           )}
           <button
@@ -609,33 +758,23 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
       {isCameraActive && (
         <div className="space-y-4">
           {/* Camera viewport */}
-          <div className="relative bg-black overflow-hidden rounded-sm" style={{ height: '60vh' }}>
+          <div className="relative bg-black overflow-hidden rounded-sm" style={{ height: '72vh' }}>
             <video
-              ref={videoRef}
+              ref={attachVideoRef}
               autoPlay
               playsInline
               muted
               className="w-full h-full object-cover"
+              style={{ transform: 'scaleX(-1)' }}
             />
 
-            {/* Body silhouette guide */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div
-                className="border-2 border-gold/30"
-                style={{
-                  width: '42%',
-                  height: '82%',
-                  borderRadius: '50% 50% 38% 38% / 12% 12% 8% 8%',
-                }}
-              />
-            </div>
+            {/* Body position guide overlay */}
+            <BodyGuideOverlay />
 
             {/* Phase label top */}
             <div className="absolute top-3 left-0 right-0 flex justify-center pointer-events-none">
               <div className="bg-black/65 px-5 py-2 text-center">
-                <p className="text-offwhite text-sm tracking-[0.2em] uppercase font-light">
-                  {status === 'camera_front' || status === 'countdown_front' ? 'Foto de Frente' : 'Foto de Costas'}
-                </p>
+                <p className="text-offwhite text-sm tracking-[0.2em] uppercase font-light">Foto de Frente</p>
                 <p className="text-offwhite/40 text-xs mt-0.5">Corpo inteiro · fique de pé</p>
               </div>
             </div>
@@ -656,38 +795,20 @@ export default function Step2BodyScan({ initialMeasurements, onComplete, onSkip 
             {!isCounting && (
               <div className="absolute bottom-3 left-0 right-0 flex justify-center pointer-events-none">
                 <p className="text-offwhite/50 text-xs text-center max-w-[260px] px-4">
-                  {status === 'camera_front'
-                    ? 'Posicione seu corpo inteiro dentro do guia e toque em Pronto'
-                    : 'Vire de costas, reposicione e toque em Pronto'}
+                  Posicione seu corpo inteiro dentro do guia e toque em Pronto
                 </p>
               </div>
             )}
-          </div>
-
-          {/* Step dots */}
-          <div className="flex items-center justify-center gap-2">
-            <div className={`w-2 h-2 rounded-full transition-colors ${
-              status === 'camera_front' || status === 'countdown_front' ? 'bg-gold' : 'bg-gold/25'
-            }`} />
-            <div className={`w-8 h-px transition-colors ${
-              status === 'camera_back' || status === 'countdown_back' ? 'bg-gold/50' : 'bg-gold/10'
-            }`} />
-            <div className={`w-2 h-2 rounded-full transition-colors ${
-              status === 'camera_back' || status === 'countdown_back' ? 'bg-gold' : 'bg-gold/25'
-            }`} />
-            <p className="text-offwhite/30 text-xs ml-2">
-              {status === 'camera_front' || status === 'countdown_front' ? 'Foto 1 de 2' : 'Foto 2 de 2'}
-            </p>
           </div>
 
           {/* Action button */}
           {!isCounting && (
             <button
               type="button"
-              onClick={() => beginCountdown(status === 'camera_front' ? 'front' : 'back')}
+              onClick={beginCountdown}
               className="w-full bg-gold text-primary py-3.5 text-xs tracking-[0.2em] uppercase hover:bg-gold/90 transition-colors"
             >
-              {status === 'camera_front' ? 'Pronto — tirar foto de frente' : 'Pronto — tirar foto de costas'}
+              Pronto — tirar foto
             </button>
           )}
 
